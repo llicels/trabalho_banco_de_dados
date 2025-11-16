@@ -300,3 +300,51 @@ GROUP BY
     a.CID,
     a.Observações;
 
+
+
+
+
+-- Consultando os exames solicitados de um determinado paciente e seu respectivo status, resultados disponíveis e o histórico de exames em determinado período de tempo;
+
+-- Exames de um determinado paciente e seu status 
+-- O backend deve substituir o primeiro ? pelo CPF do paciente (ex: '11111111111')
+
+SELECT p.nome, am.exame, am.previsão_liberação
+FROM paciente AS p 
+JOIN atendimento a ON a.cpf_paciente = p.cpf 
+JOIN amostra_coletada AS am ON am.id_atendimento = a.id_atendimento
+WHERE a.cpf_paciente = ?
+
+-- Resultados disponíveis de um determinado paciente
+-- O backend substitui ? pelo CPF do paciente
+-- O backend substitui ? pelo status (ex: 'Disponível' ou 'Pendente')
+SELECT
+    p.Nome AS Nome_Paciente,
+    am.Exame,
+    am.Previsão_Liberação,
+    CASE
+        WHEN am.Previsão_Liberação <= NOW() THEN 'Disponível'
+        ELSE 'Pendente'
+    END AS Status_Resultado
+    
+FROM Amostra_Coletada AS am
+JOIN Atendimento AS a ON am.ID_Atendimento = a.ID_Atendimento
+JOIN Paciente AS p ON a.CPF_Paciente = p.CPF
+WHERE
+    p.CPF = ?
+    AND (
+        CASE
+            WHEN am.Previsão_Liberação <= NOW() THEN 'Disponível'
+            ELSE 'Pendente'
+        END
+    ) = ? -- Filtra pelo status desejado
+ORDER BY
+    am.Previsão_Liberação;
+
+
+
+
+-- historico de exames de um paciente em determinado periodo de tempo 
+
+
+
