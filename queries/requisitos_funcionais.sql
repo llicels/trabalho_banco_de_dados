@@ -346,5 +346,33 @@ ORDER BY
 
 -- historico de exames de um paciente em determinado periodo de tempo 
 
+SELECT 
+    p.nome, 
+    am.exame 
+FROM paciente AS p 
+JOIN atendimento AS a ON p.cpf = a.cpf_paciente
+JOIN amostra_coletada AS am ON am.id_atendimento = a.id_atendimento
+WHERE 
+    p.cpf = ?
+    AND CAST(a.data_hora_entrada AS DATE) BETWEEN ? AND ?
+ORDER BY 
+    a.data_hora_entrada DESC
 
 
+-- histórico de chapas de raio-x em determinado periodo (tem que atualizar o bd)
+
+
+
+
+
+
+
+
+
+-- Consultando pacientes encaminhados, status do procedimento de transferência, destino e justificativa. (seria bom atualizar o bd)
+SELECT p.nome,
+t.justificativa, t.status_tranferência, h.nome AS destino
+FROM paciente AS p JOIN atendimento AS a ON p.cpf = a.cpf_paciente
+JOIN transferência AS t ON a.id_atendimento = t.id_atendimento
+JOIN hospital AS h ON t.id_transferência = h.id_transferência
+WHERE p.cpf = ?
