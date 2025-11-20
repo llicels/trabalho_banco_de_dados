@@ -75,4 +75,54 @@ class AtendimentoDatabase:
         statement = f"""INSERT INTO Atendimento_Usa_Medicamento (ID_Atendimento, Nome_Medicamento) 
                         VALUES ({id_atendimento}, '{nome_medicamento}');"""
         return self.db.execute_statement(statement)
+    
 
+
+    def consultar_atendimentos_por_periodo(self, data_inicio: str, data_fim: str, 
+                                        cpf_paciente: str = None, 
+                                        cpf_profissional: str = None):
+        """
+        Consulta atendimentos por período, opcionalmente filtrado por paciente ou profissional
+        Retorna informações completas incluindo profissionais envolvidos
+        """
+        query = f"""
+        SELECT 
+            a.ID_Atendimento,
+            a.Data_Hora_Entrada,
+            a.Data_Hora_Saída,
+            a.CID,
+            a.Nível_de_Risco,
+            a.Observações,
+            a.Temperatura,
+            a.Pressão_Arterial,
+            a.Frequência_Cardíaca,
+            p.Nome AS Nome_Paciente,
+            p.CPF AS CPF_Paciente,
+            m.Nome AS Nome_Medico,
+            d.Nome AS Nome_Dentista,
+            pe.Nome AS Nome_Enfermagem
+        FROM Atendimento a
+        INNER JOIN Paciente p ON a.CPF_Paciente = p.CPF
+        LEFT JOIN Médico m ON a.CPF_Médico = m.CPF
+        LEFT JOIN Dentista d ON a.CPF_Dentista = d.CPF
+        LEFT JOIN Profissional_de_Enfermagem pe ON a.CPF_Profissional_de_Enfermagem = pe.CPF
+        WHERE a.Data_Hora_Entrada >= '{data_inicio}' AND a.Data_Hora_Entrada <= '{data_fim}'
+        """
+        
+        if cpf_paciente:
+            query += f" AND a.CPF_Paciente = '{cpf_paciente}'"
+        
+        if cpf_profissional:
+            query += f""" AND (
+                a.CPF_Médico = '{cpf_profissional}' OR 
+                a.CPF_Dentista = '{cpf_profissional}' OR 
+                a.CPF_Profissional_de_Enfermagem = '{cpf_profissional}' OR
+                a.CPF_Assistente_Social = '{cpf_profissional}' OR
+                a.CPF_Técnico_de_Radiologia = '{cpf_profissional}'
+            )"""
+        
+        query += " ORDER BY a.Data_Hora_Entrada DESC"
+        
+        return self.db.execute_select_all(query)
+    
+    

@@ -103,3 +103,31 @@ def post_medicamento_atendimento(id_atendimento):
     
     return jsonify("Medicamento adicionado com sucesso"), 200
 
+@atendimento_blueprint.route("/atendimentos/consulta", methods=["GET"])
+def consultar_atendimentos():
+    """
+    Consulta atendimentos por período
+    Query params:
+    - data_inicio: Data inicial (formato: YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS)
+    - data_fim: Data final (formato: YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS)
+    - cpf_paciente: (opcional) CPF do paciente
+    - cpf_profissional: (opcional) CPF do profissional
+    """
+    data_inicio = request.args.get("data_inicio", "")
+    data_fim = request.args.get("data_fim", "")
+    cpf_paciente = request.args.get("cpf_paciente", "")
+    cpf_profissional = request.args.get("cpf_profissional", "")
+    
+    # Validação básica
+    if not data_inicio or not data_fim:
+        return jsonify("Parâmetros 'data_inicio' e 'data_fim' são obrigatórios"), 400
+    
+    # Converter strings vazias para None
+    cpf_p = cpf_paciente if cpf_paciente else None
+    cpf_prof = cpf_profissional if cpf_profissional else None
+    
+    resultado = AtendimentoDatabase().consultar_atendimentos_por_periodo(
+        data_inicio, data_fim, cpf_p, cpf_prof
+    )
+    
+    return jsonify(resultado), 200
