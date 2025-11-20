@@ -124,5 +124,115 @@ class AtendimentoDatabase:
         query += " ORDER BY a.Data_Hora_Entrada DESC"
         
         return self.db.execute_select_all(query)
+
+    def atendimentos_por_risco_e_data(self, nivel_risco: str, data: str):
+        query = f"""
+        SELECT * FROM atendimento
+        WHERE nível_de_risco = '{nivel_risco}'
+        AND CAST(data_hora_entrada AS DATE) = '{data}';
+        """
+        return self.db.execute_select_all(query)
+
+    def contagem_pacientes_por_risco_e_data(self, nivel_risco: str, data: str):
+        query = f"""
+        SELECT COUNT (*) AS contagem_risco
+        FROM atendimento
+        WHERE nível_de_risco = '{nivel_risco}'
+        AND CAST(data_hora_entrada AS DATE) = '{data}';
+        """
+        return self.db.execute_select_all(query)
+
+    def atendimentos_por_profissional(self, cpf: str):
+        query = f"""
+        SELECT
+            ID_Atendimento,
+            Data_Hora_Entrada,
+            Nível_de_Risco,
+            CPF_Paciente
+        FROM Atendimento
+        WHERE
+            CPF_Médico = '{cpf}'
+            OR CPF_Dentista = '{cpf}'
+            OR CPF_Assistente_Social = '{cpf}'
+            OR CPF_Técnico_de_Radiologia = '{cpf}'
+            OR CPF_Profissional_de_Enfermagem = '{cpf}';
+        """
+        return self.db.execute_select_all(query)
+
+    def exames_medicamentos_raiox_por_paciente_data(self, cpf: str, data: str):
+        query = f"""
+        SELECT
+            p.Nome AS Nome_Paciente,
+            a.ID_Atendimento,
+            a.CID,
+            a.Observações,
+            STRING_AGG(DISTINCT ac.Exame, ', ') AS Exames_Coletados,
+            STRING_AGG(DISTINCT aum.Nome_Medicamento, ', ') AS Medicamentos_Aplicados,
+            STRING_AGG(DISTINCT eqx.Nome, ', ') AS Equipamentos_de_Raio_X_Usados
+        FROM Paciente AS p
+        JOIN Atendimento AS a ON p.CPF = a.CPF_Paciente
+        LEFT JOIN Amostra_Coletada AS ac ON a.ID_Atendimento = ac.ID_Atendimento
+        LEFT JOIN Atendimento_Usa_Medicamento AS aum ON a.ID_Atendimento = aum.ID_Atendimento
+        LEFT JOIN Atendimento_Usa_Equipamento AS aue ON a.ID_Atendimento = aue.ID_Atendimento
+        LEFT JOIN Equipamento_Raio_X AS eqx ON aue.ID_Equipamento = eqx.ID_Equipamento
+        WHERE p.CPF = '{cpf}'
+        AND CAST(a.Data_Hora_Entrada AS DATE) = '{data}'
+        GROUP BY
+            p.Nome,
+            a.ID_Atendimento,
+            a.CID,
+            a.Observações;
+        """
+        return self.db.execute_select_all(query)
+
+    def exames_de_paciente(self, cpf: str):
+        query = f"""
+        SELECT p.nome, am.exame, am.previsão_liberação
+        FROM paciente AS p 
+        JOIN atendimento a ON a.cpf_paciente = p.cpf 
+        JOIN amostra_coletada AS am ON am.id_atendimento = a.id_atendimento
+        WHERE a.cpf_paciente = '{cpf}';
+        """
+        return self.db.execute_select_all(query)
+
+    def resultados_disponiveis_por_paciente_status(self, cpf: str, status: str):
+        query = f"""
+        SELECT
+            p.Nome AS Nome_Paciente,
+            am.Exame,
+            am.Previsão_Liberação,
+            CASE
+                WHEN am.Previsão_Liberação <= NOW() THEN 'Disponível'
+                ELSE 'Pendente'
+            END AS Status_Resultado
+        FROM Amostra_Coletada AS am
+        JOIN Atendimento AS a ON am.ID_Atendimento = a.ID_Atendimento
+        JOIN Paciente AS p ON a.CPF_Paciente = p.CPF
+        WHERE p.CPF = '{cpf}'
+        AND (
+            CASE
+                WHEN am.Previsão_Liberação <= NOW() THEN 'Disponível'
+                ELSE 'Pendente'
+            END
+        ) = '{status}'
+        ORDER BY am.Previsão_Liberação;
+        """
+        return self.db.execute_select_all(query)
+
+    def historico_exames_paciente_periodo(self, cpf: str, data_inicio: str, data_fim: str):
+        query = f"""
+        SELECT 
+            p.nome, 
+            am.exame 
+        FROM paciente AS p 
+        JOIN atendimento AS a ON p.cpf = a.cpf_paciente
+        JOIN amostra_coletada AS am ON am.id_atendimento = a.id_atendimento
+        WHERE 
+            p.cpf = '{cpf}'
+            AND CAST(a.data_hora_entrada AS DATE) BETWEEN '{data_inicio}' AND '{data_fim}'
+        ORDER BY 
+            a.data_hora_entrada DESC;
+        """
+        return self.db.execute_select_all(query)
     
     

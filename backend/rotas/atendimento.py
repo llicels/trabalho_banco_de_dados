@@ -131,3 +131,65 @@ def consultar_atendimentos():
     )
     
     return jsonify(resultado), 200
+
+
+@atendimento_blueprint.route("/atendimentos/risco", methods=["GET"])
+def atendimentos_risco():
+    nivel_risco = request.args.get("nivel_risco", "")
+    data = request.args.get("data", "")
+    if not nivel_risco or not data:
+        return jsonify("Parâmetros 'nivel_risco' e 'data' são obrigatórios"), 400
+    return jsonify(AtendimentoDatabase().atendimentos_por_risco_e_data(nivel_risco, data)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/risco/contagem", methods=["GET"])
+def contagem_risco():
+    nivel_risco = request.args.get("nivel_risco", "")
+    data = request.args.get("data", "")
+    if not nivel_risco or not data:
+        return jsonify("Parâmetros 'nivel_risco' e 'data' são obrigatórios"), 400
+    return jsonify(AtendimentoDatabase().contagem_pacientes_por_risco_e_data(nivel_risco, data)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/profissional", methods=["GET"])
+def atendimentos_profissional():
+    cpf = request.args.get("cpf", "")
+    if not cpf:
+        return jsonify("Parâmetro 'cpf' é obrigatório"), 400
+    return jsonify(AtendimentoDatabase().atendimentos_por_profissional(cpf)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/exames-paciente", methods=["GET"])
+def exames_paciente():
+    cpf = request.args.get("cpf", "")
+    data = request.args.get("data", "")
+    if not cpf or not data:
+        return jsonify("Parâmetros 'cpf' e 'data' são obrigatórios"), 400
+    return jsonify(AtendimentoDatabase().exames_medicamentos_raiox_por_paciente_data(cpf, data)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/exames", methods=["GET"])
+def exames_de_paciente():
+    cpf = request.args.get("cpf", "")
+    if not cpf:
+        return jsonify("Parâmetro 'cpf' é obrigatório"), 400
+    return jsonify(AtendimentoDatabase().exames_de_paciente(cpf)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/resultados", methods=["GET"])
+def resultados_paciente():
+    cpf = request.args.get("cpf", "")
+    status = request.args.get("status", "")
+    if not cpf or not status:
+        return jsonify("Parâmetros 'cpf' e 'status' são obrigatórios"), 400
+    return jsonify(AtendimentoDatabase().resultados_disponiveis_por_paciente_status(cpf, status)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/exames/historico", methods=["GET"])
+def historico_exames():
+    cpf = request.args.get("cpf", "")
+    data_inicio = request.args.get("data_inicio", "")
+    data_fim = request.args.get("data_fim", "")
+    if not cpf or not data_inicio or not data_fim:
+        return jsonify("Parâmetros 'cpf', 'data_inicio' e 'data_fim' são obrigatórios"), 400
+    return jsonify(AtendimentoDatabase().historico_exames_paciente_periodo(cpf, data_inicio, data_fim)), 200

@@ -105,3 +105,33 @@ def post_colaborador_geral_turno(id_turno):
     
     return jsonify("Colaborador geral adicionado ao turno com sucesso"), 200
 
+
+@turno_blueprint.route("/turnos/escala/colaborador", methods=["GET"])
+def get_escala_colaborador():
+    cpf = request.args.get("cpf", "")
+    if not cpf:
+        return jsonify("Parâmetro 'cpf' é obrigatório"), 400
+    return jsonify(TurnoDatabase().get_escala_por_colaborador(cpf)), 200
+
+
+@turno_blueprint.route("/turnos/escala/data", methods=["GET"])
+def get_escala_data():
+    data = request.args.get("data", "")
+    if not data:
+        return jsonify("Parâmetro 'data' é obrigatório"), 400
+    return jsonify(TurnoDatabase().get_escala_por_data(data)), 200
+
+
+@turno_blueprint.route("/turnos/escala/intervalo", methods=["GET"])
+def get_escala_intervalo():
+    data_inicio = request.args.get("data_inicio", "")
+    data_fim = request.args.get("data_fim", "")
+    if not data_inicio or not data_fim:
+        return jsonify("Parâmetros 'data_inicio' e 'data_fim' são obrigatórios"), 400
+    return jsonify(TurnoDatabase().get_escala_por_intervalo(data_inicio, data_fim)), 200
+
+
+@turno_blueprint.route("/turnos/<int:id_turno>/colaboradores", methods=["GET"])
+def get_colaboradores_turno(id_turno):
+    return jsonify(TurnoDatabase().get_colaboradores_por_turno(id_turno)), 200
+

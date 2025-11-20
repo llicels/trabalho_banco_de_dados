@@ -2,6 +2,7 @@ from typing import Any
 import psycopg2
 from psycopg2.extras import DictCursor
 from psycopg2.errors import IntegrityError
+import traceback
 
 
 class DatabaseManager:
@@ -24,10 +25,21 @@ class DatabaseManager:
             self.conn.commit()
         except IntegrityError as e:
             print(f"Integrity error: {e}")
-            self.conn.reset()
+            print("Failed statement:", statement)
+            print(traceback.format_exc())
+            try:
+                self.conn.rollback()
+            except Exception:
+                pass
             return False
         except:
-            self.conn.reset()
+            print("Unexpected error executing statement")
+            print("Failed statement:", statement)
+            print(traceback.format_exc())
+            try:
+                self.conn.rollback()
+            except Exception:
+                pass
             return False
         return True
 

@@ -47,3 +47,20 @@ class LeitoDatabase:
                         AND Data_de_Alta IS NULL;"""
         return self.db.execute_statement(statement)
 
+    def get_leitos_disponiveis_por_tipo(self, tipo: str):
+        query = f"""
+        SELECT
+            l.ID_Leito,
+            l.Tipo
+        FROM Leito AS l
+        WHERE
+            l.Tipo = '{tipo}'
+            AND NOT EXISTS (
+                SELECT 1
+                FROM Paciete_Ocupa_Leito AS pol
+                WHERE pol.ID_Leito = l.ID_Leito
+                  AND pol.Data_de_Alta IS NULL
+            );
+        """
+        return self.db.execute_select_all(query)
+

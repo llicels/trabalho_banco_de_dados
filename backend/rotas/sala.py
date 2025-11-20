@@ -89,3 +89,27 @@ def post_uso_consultorio():
     
     return jsonify("Uso do consultório registrado com sucesso"), 200
 
+
+@sala_blueprint.route("/consultorios/livres", methods=["GET"])
+def consultorios_livres():
+    timestamp = request.args.get("timestamp", "")
+    if not timestamp:
+        return jsonify("Parâmetro 'timestamp' é obrigatório"), 400
+    return jsonify(SalaDatabase().consultorios_sem_medicos_em(timestamp)), 200
+
+
+@sala_blueprint.route("/salas/desocupadas", methods=["GET"])
+def salas_desocupadas():
+    timestamp = request.args.get("timestamp", "")
+    if not timestamp:
+        return jsonify("Parâmetro 'timestamp' é obrigatório"), 400
+    return jsonify(SalaDatabase().salas_desocupadas_em(timestamp)), 200
+
+
+@sala_blueprint.route("/salas-raio-x/desocupadas", methods=["GET"])
+def salas_raio_x_desocupadas():
+    timestamp = request.args.get("timestamp", "")
+    if not timestamp:
+        return jsonify("Parâmetro 'timestamp' é obrigatório"), 400
+    return jsonify(SalaDatabase().salas_raio_x_desocupadas_em(timestamp)), 200
+

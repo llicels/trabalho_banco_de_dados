@@ -46,3 +46,176 @@ class TurnoDatabase:
                         VALUES ({id_turno}, '{cpf_colaborador}');"""
         return self.db.execute_statement(statement)
 
+    def get_escala_por_colaborador(self, cpf: str):
+        query = f"""
+        SELECT
+            t.Dia_da_Semana,
+            t.Hora_Chegada,
+            t.Hora_Saída,
+            vc.Nome,
+            vc.Funcao
+        FROM Turno t
+        JOIN (
+            (SELECT ID_Turno, CPF_Médico AS CPF FROM Turno_Médico)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Dentista AS CPF FROM Turno_Dentista)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Assistente_Social AS CPF FROM Turno_Assistente_Social)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Técnico AS CPF FROM Turno_Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Profissional AS CPF FROM Turno_Profissional_Enfermagem)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Colaborador AS CPF FROM Turno_Colaborador_Geral)
+        ) vt ON t.ID_Turno = vt.ID_Turno
+        JOIN (
+            (SELECT CPF, Nome, 'Médico' AS Funcao FROM Médico)
+            UNION ALL
+            (SELECT CPF, Nome, 'Dentista' AS Funcao FROM Dentista)
+            UNION ALL
+            (SELECT CPF, Nome, 'Assistente Social' AS Funcao FROM Assistente_Social)
+            UNION ALL
+            (SELECT CPF, Nome, 'Técnico(a) Radiologia' AS Funcao FROM Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT CPF, Nome,
+                CASE WHEN Categoria = 'E' THEN 'Enfermeiro(a)' ELSE 'Técnico(a) Enfermagem' END AS Funcao
+             FROM Profissional_de_Enfermagem)
+            UNION ALL
+            (SELECT CPF, Nome, Função AS Funcao FROM Colaborador_Geral)
+        ) vc ON vt.CPF = vc.CPF
+        WHERE vc.CPF = '{cpf}';
+        """
+        return self.db.execute_select_all(query)
+
+    def get_escala_por_data(self, data: str):
+        query = f"""
+        SELECT
+            t.Dia_da_Semana,
+            t.Hora_Chegada,
+            t.Hora_Saída,
+            vc.Nome AS Nome_Colaborador,
+            vc.Funcao
+        FROM Turno t
+        JOIN (
+            (SELECT ID_Turno, CPF_Médico AS CPF FROM Turno_Médico)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Dentista AS CPF FROM Turno_Dentista)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Assistente_Social AS CPF FROM Turno_Assistente_Social)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Técnico AS CPF FROM Turno_Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Profissional AS CPF FROM Turno_Profissional_Enfermagem)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Colaborador AS CPF FROM Turno_Colaborador_Geral)
+        ) vt ON t.ID_Turno = vt.ID_Turno
+        JOIN (
+            (SELECT CPF, Nome, 'Médico' AS Funcao FROM Médico)
+            UNION ALL
+            (SELECT CPF, Nome, 'Dentista' AS Funcao FROM Dentista)
+            UNION ALL
+            (SELECT CPF, Nome, 'Assistente Social' AS Funcao FROM Assistente_Social)
+            UNION ALL
+            (SELECT CPF, Nome, 'Técnico(a) Radiologia' AS Funcao FROM Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT CPF, Nome,
+                CASE WHEN Categoria = 'E' THEN 'Enfermeiro(a)' ELSE 'Técnico(a) Enfermagem' END AS Funcao
+             FROM Profissional_de_Enfermagem)
+            UNION ALL
+            (SELECT CPF, Nome, Função AS Funcao FROM Colaborador_Geral)
+        ) vc ON vt.CPF = vc.CPF
+        WHERE CAST(t.Hora_Chegada AS DATE) = '{data}'
+        ORDER BY t.Hora_Chegada, vc.Funcao, vc.Nome;
+        """
+        return self.db.execute_select_all(query)
+
+    def get_escala_por_intervalo(self, data_inicio: str, data_fim: str):
+        query = f"""
+        SELECT
+            t.Dia_da_Semana,
+            t.Hora_Chegada,
+            t.Hora_Saída,
+            vc.Nome AS Nome_Colaborador,
+            vc.Funcao
+        FROM Turno t
+        JOIN (
+            (SELECT ID_Turno, CPF_Médico AS CPF FROM Turno_Médico)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Dentista AS CPF FROM Turno_Dentista)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Assistente_Social AS CPF FROM Turno_Assistente_Social)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Técnico AS CPF FROM Turno_Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Profissional AS CPF FROM Turno_Profissional_Enfermagem)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Colaborador AS CPF FROM Turno_Colaborador_Geral)
+        ) vt ON t.ID_Turno = vt.ID_Turno
+        JOIN (
+            (SELECT CPF, Nome, 'Médico' AS Funcao FROM Médico)
+            UNION ALL
+            (SELECT CPF, Nome, 'Dentista' AS Funcao FROM Dentista)
+            UNION ALL
+            (SELECT CPF, Nome, 'Assistente Social' AS Funcao FROM Assistente_Social)
+            UNION ALL
+            (SELECT CPF, Nome, 'Técnico(a) Radiologia' AS Funcao FROM Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT CPF, Nome,
+                CASE WHEN Categoria = 'E' THEN 'Enfermeiro(a)' ELSE 'Técnico(a) Enfermagem' END AS Funcao
+             FROM Profissional_de_Enfermagem)
+            UNION ALL
+            (SELECT CPF, Nome, Função AS Funcao FROM Colaborador_Geral)
+        ) vc ON vt.CPF = vc.CPF
+        WHERE CAST(t.Hora_Chegada AS DATE) BETWEEN '{data_inicio}' AND '{data_fim}'
+        ORDER BY
+            CASE
+                WHEN t.Dia_da_Semana = 'Domingo' THEN 1
+                WHEN t.Dia_da_Semana = 'Segunda' THEN 2
+                WHEN t.Dia_da_Semana = 'Terça' THEN 3
+                WHEN t.Dia_da_Semana = 'Quarta' THEN 4
+                WHEN t.Dia_da_Semana = 'Quinta' THEN 5
+                WHEN t.Dia_da_Semana = 'Sexta' THEN 6
+                WHEN t.Dia_da_Semana = 'Sábado' THEN 7
+            END,
+            t.Hora_Chegada,
+            vc.Funcao;
+        """
+        return self.db.execute_select_all(query)
+
+    def get_colaboradores_por_turno(self, id_turno: int):
+        query = f"""
+        SELECT
+            vc.nome,
+            vc.funcao
+        FROM (
+            (SELECT CPF, Nome, 'Médico' AS Funcao FROM Médico)
+            UNION ALL
+            (SELECT CPF, Nome, 'Dentista' AS Funcao FROM Dentista)
+            UNION ALL
+            (SELECT CPF, Nome, 'Assistente Social' AS Funcao FROM Assistente_Social)
+            UNION ALL
+            (SELECT CPF, Nome, 'Técnico(a) Radiologia' AS Funcao FROM Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT CPF, Nome,
+                CASE WHEN Categoria = 'E' THEN 'Enfermeiro(a)' ELSE 'Técnico(a) Enfermagem' END AS Funcao
+             FROM Profissional_de_Enfermagem)
+            UNION ALL
+            (SELECT CPF, Nome, Função AS Funcao FROM Colaborador_Geral)
+        ) vc
+        JOIN (
+            (SELECT ID_Turno, CPF_Médico AS CPF FROM Turno_Médico)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Dentista AS CPF FROM Turno_Dentista)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Assistente_Social AS CPF FROM Turno_Assistente_Social)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Técnico AS CPF FROM Turno_Técnico_de_Radiologia)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Profissional AS CPF FROM Turno_Profissional_Enfermagem)
+            UNION ALL
+            (SELECT ID_Turno, CPF_Colaborador AS CPF FROM Turno_Colaborador_Geral)
+        ) vt ON vt.CPF = vc.CPF
+        WHERE vt.ID_Turno = {id_turno};
+        """
+        return self.db.execute_select_all(query)
+

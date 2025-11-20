@@ -62,3 +62,79 @@ class SalaDatabase:
                         VALUES ({', '.join(valores)});"""
         return self.db.execute_statement(statement)
 
+    def consultorios_sem_medicos_em(self, timestamp: str):
+        query = f"""
+        SELECT
+            c.ID_Consultório,
+            c.Tipo
+        FROM Consultório AS c
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM Uso_Consultório AS uc
+            JOIN Turno AS t ON uc.ID_Turno = t.ID_Turno
+            WHERE
+                uc.ID_Consultório = c.ID_Consultório 
+                AND '{timestamp}' BETWEEN t.Hora_Chegada AND t.Hora_Saída 
+        );
+        """
+        return self.db.execute_select_all(query)
+
+    def salas_desocupadas_em(self, timestamp: str):
+        query = f"""
+        SELECT
+            s.ID_Sala,
+            s.Tipo
+        FROM Sala AS s
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM Profissional_de_Enfermagem AS pe
+            JOIN (
+                (SELECT ID_Turno, CPF_Médico AS CPF FROM Turno_Médico)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Dentista AS CPF FROM Turno_Dentista)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Assistente_Social AS CPF FROM Turno_Assistente_Social)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Técnico AS CPF FROM Turno_Técnico_de_Radiologia)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Profissional AS CPF FROM Turno_Profissional_Enfermagem)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Colaborador AS CPF FROM Turno_Colaborador_Geral)
+            ) vt ON pe.CPF = vt.CPF
+            JOIN Turno AS t ON vt.ID_Turno = t.ID_Turno
+            WHERE
+                pe.ID_Sala = s.ID_Sala
+                AND '{timestamp}' BETWEEN t.Hora_Chegada AND t.Hora_Saída
+        );
+        """
+        return self.db.execute_select_all(query)
+
+    def salas_raio_x_desocupadas_em(self, timestamp: str):
+        query = f"""
+        SELECT
+            srx.ID_Sala_Raio_X
+        FROM Sala_de_Raio_X AS srx
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM Técnico_de_Radiologia AS tr
+            JOIN (
+                (SELECT ID_Turno, CPF_Médico AS CPF FROM Turno_Médico)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Dentista AS CPF FROM Turno_Dentista)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Assistente_Social AS CPF FROM Turno_Assistente_Social)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Técnico AS CPF FROM Turno_Técnico_de_Radiologia)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Profissional AS CPF FROM Turno_Profissional_Enfermagem)
+                UNION ALL
+                (SELECT ID_Turno, CPF_Colaborador AS CPF FROM Turno_Colaborador_Geral)
+            ) vt ON tr.CPF = vt.CPF
+            JOIN Turno AS t ON vt.ID_Turno = t.ID_Turno
+            WHERE
+                tr.ID_Sala_de_Raio_X = srx.ID_Sala_Raio_X
+                AND '{timestamp}' BETWEEN t.Hora_Chegada AND t.Hora_Saída
+        );
+        """
+        return self.db.execute_select_all(query)
+

@@ -38,3 +38,17 @@ class TransferenciaDatabase:
                         VALUES ('{nome}', '{endereco}', '{telefone}');"""
         return self.db.execute_statement(statement)
 
+    def get_transferencias_por_paciente(self, cpf: str):
+        query = f"""
+        SELECT p.nome,
+               t.justificativa,
+               t.status_tranferência,
+               h.nome AS destino
+        FROM paciente AS p
+        JOIN atendimento AS a ON p.cpf = a.cpf_paciente
+        JOIN transferência AS t ON a.id_atendimento = t.id_atendimento
+        JOIN hospital AS h ON t.id_hospital = h.id_hospital
+        WHERE p.cpf = '{cpf}';
+        """
+        return self.db.execute_select_all(query)
+

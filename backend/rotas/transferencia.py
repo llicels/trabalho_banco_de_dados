@@ -60,3 +60,11 @@ def post_hospital():
     
     return jsonify("Hospital registrado com sucesso"), 200
 
+
+@transferencia_blueprint.route("/transferencias/paciente", methods=["GET"])
+def transferencias_paciente():
+    cpf = request.args.get("cpf", "")
+    if not cpf:
+        return jsonify("Parâmetro 'cpf' é obrigatório"), 400
+    return jsonify(TransferenciaDatabase().get_transferencias_por_paciente(cpf)), 200
+

@@ -126,7 +126,9 @@ CREATE TABLE Transferência(
     Status_Tranferência VARCHAR(20),
     Transporte VARCHAR(20),
     ID_Atendimento INT,
-    CONSTRAINT fk_Atendimento_Transferência FOREIGN KEY (ID_Atendimento) REFERENCES Atendimento(ID_Atendimento)
+    ID_Hospital INT,
+    CONSTRAINT fk_Atendimento_Transferência FOREIGN KEY (ID_Atendimento) REFERENCES Atendimento(ID_Atendimento),
+    CONSTRAINT fk_Hospital_Transferência FOREIGN KEY (ID_Hospital) REFERENCES Atendimento(ID_Hospital)
 );
 
 CREATE TABLE Hospital(
@@ -134,8 +136,6 @@ CREATE TABLE Hospital(
     Nome VARCHAR(30) NOT NULL,
     Endereço VARCHAR(30) NOT NULL,
     Telefone VARCHAR(20) NOT NULL,
-    ID_Transferência INT,
-    CONSTRAINT fk_Hospital_Transferência FOREIGN KEY (ID_Transferência) REFERENCES Transferência(ID_Transferência)
 );
 
 CREATE TABLE Equipamento_Raio_X(
