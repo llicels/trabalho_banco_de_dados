@@ -1,16 +1,11 @@
-# React + Vite
+# 🏥 Frontend - Sistema de Gestão UPA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este é o front-end do projeto de Banco de Dados, focado no **Painel de Gerenciamento da UPA**.
+O objetivo é fornecer uma interface de visualização gerencial (Dashboard) para monitorar leitos, escalas, agendas e atendimentos.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias Utilizadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* **[React](https://react.dev/):** Biblioteca principal para construção da interface.
+* **[Vite](https://vitejs.dev/):** Ferramenta de build rápida (substituto do Create React App).
+* **[Tailwind CSS (v4)](https://tailwindcss.com/):** Framework de estilização utilitário.
+* **[React Router DOM](https://reactrouter.com/):** Gerenciamento de rotas e navegação (SPA).
