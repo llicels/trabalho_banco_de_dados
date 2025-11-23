@@ -13,6 +13,22 @@
     --color-Grey: #BEBEBE;
     --color-DarkGrey: #3B3B3B;
     --color-Black: #252321;
+    --color-Red: #E7000B;
+    --color-LightYellow: #FFDF20;
 
     --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Estilo da Barra de Rolagem Personalizada */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: LightGrey;
+  border-radius: 20px;
 }

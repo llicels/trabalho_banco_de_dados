@@ -8,7 +8,7 @@ export function SidebarItem({
     <button
       onClick={onClick}
       className={`
-        p-3 rounded-xl flex justify-center transition-all duration-200
+        p-3 rounded-xl flex justify-center transition-all duration-200 cursor-pointer
         ${isActive 
           ? 'bg-Blue3 text-white shadow-md'
           : 'text-white hover:bg-Blue3'

@@ -19,7 +19,7 @@ export function Header({}) {
   const currentTitle = pageTitles[location.pathname] || 'Gestão UPA';
 
   return (
-    <header className="h-20 bg-pureWhite border-b border-Grey flex items-center justify-between px-8 shrink-0">
+    <header className="h-20 bg-LightGrey border-b border-Grey flex items-center justify-between px-8 shrink-0">
       
       <h1 className="text-3xl font-bold text-Black">
         {currentTitle}
@@ -27,8 +27,8 @@ export function Header({}) {
 
       <div className="flex items-center gap-4">
         <div className="text-right hidden sm:block">
-          <p className="text-sm font-bold text-Black">Ricardo Almeida</p>
-          <p className="text-xs text-Black">Gestor de Plantão</p>
+          <p className="text-base font-bold text-Black">Ricardo Almeida</p>
+          <p className="text-sm text-Black">Gestor de Plantão</p>
         </div>
         
         <div className="w-12 h-12 bg-Grey p-2 rounded-full flex items-center justify-center text-Black">
