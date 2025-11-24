@@ -119,6 +119,13 @@ CREATE TABLE Atendimento(
     CONSTRAINT fk_Profissional_de_Enfermagem_Atendimento FOREIGN KEY (CPF_Profissional_de_Enfermagem) REFERENCES Profissional_de_Enfermagem(CPF)
 );
 
+CREATE TABLE Hospital(
+    ID_Hospital SERIAL PRIMARY KEY,
+    Nome VARCHAR(30) NOT NULL,
+    Endereço VARCHAR(30) NOT NULL,
+    Telefone VARCHAR(20) NOT NULL
+);
+
 CREATE TABLE Transferência(
     ID_Transferência SERIAL PRIMARY KEY,
     Data_Transferência DATE,
@@ -128,14 +135,7 @@ CREATE TABLE Transferência(
     ID_Atendimento INT,
     ID_Hospital INT,
     CONSTRAINT fk_Atendimento_Transferência FOREIGN KEY (ID_Atendimento) REFERENCES Atendimento(ID_Atendimento),
-    CONSTRAINT fk_Hospital_Transferência FOREIGN KEY (ID_Hospital) REFERENCES Atendimento(ID_Hospital)
-);
-
-CREATE TABLE Hospital(
-    ID_Hospital SERIAL PRIMARY KEY,
-    Nome VARCHAR(30) NOT NULL,
-    Endereço VARCHAR(30) NOT NULL,
-    Telefone VARCHAR(20) NOT NULL,
+    CONSTRAINT fk_Hospital_Transferência FOREIGN KEY (ID_Hospital) REFERENCES Hospital(ID_Hospital)
 );
 
 CREATE TABLE Equipamento_Raio_X(
@@ -244,4 +244,3 @@ CREATE TABLE Turno_Colaborador_Geral (
     FOREIGN KEY (ID_Turno) REFERENCES Turno(ID_Turno),
     FOREIGN KEY (CPF_Colaborador) REFERENCES Colaborador_Geral(CPF)
 );
-
