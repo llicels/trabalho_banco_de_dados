@@ -47,7 +47,6 @@ export function TurnosEscalasModal({ data, onClose }) {
       ) 
     : [];
     
-  // Simula adicionar o colaborador
   const handleAddColaborador = (colab) => {
       alert(`Simulação: Adicionando ${colab.nome} à escala.`);
       setIsSearching(false);

@@ -60,15 +60,14 @@ export function Agendas() {
     // 2. Criar alertas de conflito a partir dos grupos com mais de 1 evento
     eventMap.forEach((eventList, key) => {
       if (eventList.length > 1) {
-        // Criamos um objeto de ALERTA único por conflito
         const firstEvent = eventList[0];
         trueConflicts.push({
-          key: key, // Chave única
+          key: key,
           day: firstEvent.day,
           sala: firstEvent.sala,
           hora: firstEvent.hora,
           date: formatDay(firstEvent.day, currentMonth),
-          events: eventList, // Lista de TODOS os eventos envolvidos
+          events: eventList,
           count: eventList.length,
         });
       }
@@ -106,13 +105,13 @@ export function Agendas() {
   const nextMonth = () => {
     setCurrentMonth((prev) => (prev === 11 ? 0 : prev + 1));
     if (currentMonth === 11) setCurrentYear((y) => y + 1);
-    setActiveConflictAlert(null); // Fecha o pop-up ao mudar o mês
+    setActiveConflictAlert(null);
   };
 
   const prevMonth = () => {
     setCurrentMonth((prev) => (prev === 0 ? 11 : prev - 1));
     if (currentMonth === 0) setCurrentYear((y) => y - 1);
-    setActiveConflictAlert(null); // Fecha o pop-up ao mudar o mês
+    setActiveConflictAlert(null);
   };
 
   // -----------------------------
@@ -130,9 +129,7 @@ export function Agendas() {
 
   return (
     <div className="p-6">
-      {/* TÍTULO DA PÁGINA */}
-      <h1 className="text-2xl font-semibold mb-4">Agendas e Atendimentos</h1>
-
+      
       {/* -------------------------
           BARRA DE ALERTAS / CONFLITOS
       -------------------------- */}
