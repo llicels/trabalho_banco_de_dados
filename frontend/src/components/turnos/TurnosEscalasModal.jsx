@@ -1,4 +1,3 @@
-// Arquivo: src/components/Turnos/TurnosEscalasModal.jsx
 import React, { useState } from 'react';
 
 // Dados mockados para simular a busca de novos colaboradores
@@ -28,7 +27,7 @@ const ColaboradorCard = ({ nome, id, funcao, onAction, actionText }) => (
 );
 
 // Componente principal do Modal
-export default function TurnosEscalasModal({ data, onClose }) {
+export function TurnosEscalasModal({ data, onClose }) {
   const { setor, hora, status, colaboradores } = data;
   
   const [isSearching, setIsSearching] = useState(false);
@@ -48,12 +47,10 @@ export default function TurnosEscalasModal({ data, onClose }) {
       ) 
     : [];
     
-  // Simula adicionar o colaborador (na vida real, isso chamaria uma API)
   const handleAddColaborador = (colab) => {
       alert(`Simulação: Adicionando ${colab.nome} à escala.`);
       setIsSearching(false);
       setSearchTerm('');
-      // No código real, você chamaria uma função de callback para atualizar o estado em Turnos.jsx
   };
 
 
@@ -69,7 +66,7 @@ export default function TurnosEscalasModal({ data, onClose }) {
         
         <div className="p-6">
           
-          {/* 1. Lista de Colaboradores Escalados (se houver) */}
+          {/* 1. Lista de Colaboradores Escalados */}
           <h3 className="text-gray-700 font-semibold mb-3">Colaboradores Escalados</h3>
           
           {colaboradores.length > 0 ? (
