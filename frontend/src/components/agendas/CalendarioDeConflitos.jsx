@@ -1,11 +1,11 @@
 export default function CalendarioDeConflitos({
   weeks,
   currentYear,
-  conflictAlerts, // Lista de ALERTA DE CONFLITOS (agrupados)
+  conflictAlerts,
   nextMonth,
   prevMonth,
   date,
-  // Props de estado e manipulação do Pop-up (vindo de Agendas.jsx)
+  // Props de estado e manipulação do Pop-up
   activeConflictAlert, 
   setActiveConflictAlert,
   handleConflictClick,
@@ -44,7 +44,7 @@ export default function CalendarioDeConflitos({
         </button>
       </div>
 
-      {/* Cabeçalho semanal (Dom, Seg, Ter...) */}
+      {/* Cabeçalho semanal */}
       <div className="grid grid-cols-7 text-center text-gray-700 font-medium mb-1">
         <div>Dom</div>
         <div>Seg</div>
@@ -55,7 +55,7 @@ export default function CalendarioDeConflitos({
         <div>Sáb</div>
       </div>
 
-      {/* DIAS - Corpo do Calendário */}
+      {/* DIAS */}
       <div 
         className="grid grid-cols-7 border border-gray-300 rounded-lg overflow-hidden" 
         style={{ borderWidth: '1px' }}

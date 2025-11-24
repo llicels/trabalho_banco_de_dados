@@ -47,7 +47,7 @@ export function Prontuarios() {
     const [searchTerm, setSearchTerm] = useState('');
     const [patientFound, setPatientFound] = useState(false);
     const [activeTab, setActiveTab] = useState('Historico');
-    const [selectedAtendimento, setSelectedAtendimento] = useState(null); // Estado para o modal
+    const [selectedAtendimento, setSelectedAtendimento] = useState(null);
 
     const tabOptions = [
         { key: 'Historico', label: 'Histórico de Atendimentos' },
@@ -166,7 +166,7 @@ export function Prontuarios() {
                 />
             </div>
             
-            {/* Botão manual de Busca (Se necessário, caso a SearchBar não tenha um botão) */}
+            {/* Botão manual de Busca */}
             <div className="mb-6 flex justify-end">
                  <button onClick={() => handleSearchSubmit(searchTerm)} className="py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
                      Buscar Prontuário
@@ -174,7 +174,7 @@ export function Prontuarios() {
             </div>
 
 
-            {/* 3. CONTEÚDO DO PRONTUÁRIO (SÓ VISÍVEL APÓS A BUSCA) */}
+            {/* 3. CONTEÚDO DO PRONTUÁRIO */}
             {patientFound && (
                 <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-200">
                     

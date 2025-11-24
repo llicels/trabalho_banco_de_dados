@@ -1,4 +1,3 @@
-// Arquivo: src/pages/Turnos.jsx
 import React, { useState, useMemo } from 'react';
 import TurnosEscalasModal from "../components/Turnos/TurnosEscalasModal"; 
 
@@ -34,8 +33,6 @@ const mockEscalaDetalhe = {
     'Emergencia-1': [mockColaboradores[1], mockColaboradores[2]], 
     'Triagem-9': [mockColaboradores[1]], 
 };
-// ----------------------------------------------------
-
 
 // --- LÓGICA DE FILTRO E MOCKS ---
 
@@ -69,7 +66,7 @@ const sectorOptions = ["Todos", "Emergência", "Triagem", "Observação", "Medic
 
 const allSectorKeys = Object.keys(mockMatriz);
 
-// 💡 MAPEAMENTO DE FUNÇÃO PARA SETORES RELEVANTES (SIMULAÇÃO)
+// MAPEAMENTO DE FUNÇÃO PARA SETORES RELEVANTES (SIMULAÇÃO)
 const functionToSectorMap = {
     "Médico": ["Emergencia", "Observacao"],
     "Enfermeira": ["Triagem", "Medicacao"],
@@ -85,7 +82,7 @@ export function Turnos() {
   const [selectedSector, setSelectedSector] = useState(sectorOptions[0]); 
 
 
-  // 💡 LÓGICA DE FILTRAGEM (FUNÇÃO E SETOR COMBINADOS)
+  // LÓGICA DE FILTRAGEM (FUNÇÃO E SETOR COMBINADOS)
   const filteredSectors = useMemo(() => {
     
     // 1. Filtrar pela Função (Simulação)
@@ -98,13 +95,10 @@ export function Turnos() {
     
     const normalizedSelectedSector = selectedSector.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // Se a função já filtrou para um subconjunto, verificamos se o setor selecionado está nesse subconjunto.
     if (sectorsByFunction.includes(normalizedSelectedSector)) {
         return [normalizedSelectedSector];
     }
-    
-    // Se selecionamos um setor específico (ex: "Emergência") e a função está como "Todas", retorna o setor específico.
-    // Se o setor não está no conjunto filtrado por função, não retorna nada.
+  
     return [];
 
   }, [selectedFunction, selectedSector]);
@@ -135,19 +129,6 @@ export function Turnos() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      
-      {/* 1. TÍTULO E AVATAR */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800"></h1>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-600">Olá, usuário</span>
-          <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-          </div>
-        </div>
-      </div>
 
       {/* 2. BARRA DE FILTROS E BUSCA */}
       <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">

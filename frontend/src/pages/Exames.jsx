@@ -1,4 +1,3 @@
-// Arquivo: src/pages/ExamesStatus.jsx
 import React, { useState, useMemo } from 'react';
 import DetalhesExameModal from '../components/exames/DetalhesExameModal';
 import { SearchBar } from '../components/SearchBar'; 
@@ -24,7 +23,7 @@ export function Exames() {
     const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]);
     const [selectedTipo, setSelectedTipo] = useState(tipoOptions[0]);
     const [selectedPeriodo, setSelectedPeriodo] = useState(periodoOptions[0]);
-    const [selectedExame, setSelectedExame] = useState(null); // Estado para o modal de detalhes
+    const [selectedExame, setSelectedExame] = useState(null);
 
     const handleSearchChange = (value) => setSearchTerm(value);
 
@@ -51,7 +50,6 @@ export function Exames() {
              list = list.filter(exame => exame.tipo === selectedTipo);
         }
 
-        // (O filtro de Período seria implementado aqui com base nas datas)
 
         return list;
     }, [searchTerm, selectedStatus, selectedTipo]);
@@ -143,7 +141,7 @@ export function Exames() {
                     <SearchBar
                         placeholder="Buscar paciente por nome ou CPF..."
                         onSearch={handleSearchChange} 
-                        onSubmit={handleSearchChange} // Usa o mesmo handler para submit
+                        onSubmit={handleSearchChange}
                         className="w-full"
                         showFilter={false}
                     />
