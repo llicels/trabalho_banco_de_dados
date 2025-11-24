@@ -136,7 +136,7 @@ export function Exames() {
                     </div>
                 </div>
 
-                {/* Busca (SearchBar) */}
+                {/* Busca */}
                 <div className="relative">
                     <SearchBar
                         placeholder="Buscar paciente por nome ou CPF..."
