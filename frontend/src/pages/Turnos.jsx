@@ -3,6 +3,9 @@ import { TurnosEscalasModal } from "../components/turnos/TurnosEscalasModal";
 import { SearchBar } from '../components/SearchBar';
 import { FilterSelect } from '../components/FilterSelect';
 
+// Imports de ícones...
+import WarningIcon from '../components/icons/WarningIcon';
+
 // --- DADOS MOCKADOS ---
 const mockColaboradores = [
   { id: 101, nome: "Dr. Bumbum", crm: "14515125125", funcao: "Cirurgião" },
@@ -11,10 +14,10 @@ const mockColaboradores = [
 ];
 
 const mockMatriz = {
-  Emergencia: { horas: [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 4h–7h, 13h–16h" },
+  Emergência: { horas: [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 4h–7h, 13h–16h" },
   Triagem: { horas: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], lacunas: "Lacunas: 0h–7h, 13h–24h" },
-  Observacao: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–7h" },
-  Medicacao: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–13h" },
+  Observação: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–7h" },
+  Medicação: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–13h" },
 };
 
 const mockEscalaDetalhe = {
@@ -184,10 +187,8 @@ export function Turnos() {
                             {/* Texto de Lacuna (Embaixo) */}
                             <div className="h-4 pl-1">
                                 {mockMatriz[setorKey].lacunas && (
-                                    <span className="text-[11px] font-bold text-Red flex items-center gap-1 animate-pulse">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" className="w-3 h-3">
-                                            <path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/>
-                                        </svg>
+                                    <span className="mt-1 text-xs font-bold text-Red flex items-center gap-1 animate-pulse">
+                                        <WarningIcon className="w-4 h-4"/>
                                         {mockMatriz[setorKey].lacunas}
                                     </span>
                                 )}
