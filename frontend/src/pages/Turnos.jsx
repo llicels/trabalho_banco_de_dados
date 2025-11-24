@@ -1,6 +1,6 @@
-// Arquivo: src/pages/Turnos.jsx
 import React, { useState, useMemo } from 'react';
-import TurnosEscalasModal from "../components/Turnos/TurnosEscalasModal"; 
+import TurnosEscalasModal from "../components/turnos/TurnosEscalasModal"; 
+import { SearchBar } from '../components/SearchBar';
 
 // --- Dados Mockados (Simulação) ---
 const mockColaboradores = [
@@ -34,11 +34,8 @@ const mockEscalaDetalhe = {
     'Emergencia-1': [mockColaboradores[1], mockColaboradores[2]], 
     'Triagem-9': [mockColaboradores[1]], 
 };
-// ----------------------------------------------------
-
 
 // --- LÓGICA DE FILTRO E MOCKS ---
-
 const formatDate = (date) => {
     const options = { weekday: 'short', day: '2-digit', month: '2-digit' };
     let formatted = date.toLocaleDateString('pt-BR', options);
@@ -134,36 +131,23 @@ export function Turnos() {
   const horas = Array.from({ length: 24 }, (_, i) => i); 
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      
-      {/* 1. TÍTULO E AVATAR */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800"></h1>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-600">Olá, usuário</span>
-          <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-          </div>
-        </div>
-      </div>
+    <div className="p-8 pt-4 bg-LightGrey min-h-screen">
 
       {/* 2. BARRA DE FILTROS E BUSCA */}
-      <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">
-        <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="bg-white p-6 pb-4 rounded-2xl shadow-sm mb-4">
+        <div className="flex items-center justify-between">
           
           {/* Dropdowns de Filtro */}
           <div className="flex gap-4">
             
             {/* Filtro de Data */}
             <div className="w-40 relative">
-                <label htmlFor="filter-data" className="text-xs font-medium text-gray-500 absolute -top-4 left-0">Data</label> {/* 💡 RÓTULO */}
+                <label htmlFor="filter-data" className="text-xs font-medium text-DarkGrey absolute -top-4 left-0">Data</label> {/* 💡 RÓTULO */}
                 <select 
                     id="filter-data"
                     value={selectedDate} 
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
+                    className="block w-full p-2 border border-Grey rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
                 >
                     {dateOptions.map(option => (
                         <option key={option} value={option}>{option}</option>
@@ -174,12 +158,12 @@ export function Turnos() {
 
             {/* Filtro de Função */}
             <div className="w-40 relative">
-                <label htmlFor="filter-funcao" className="text-xs font-medium text-gray-500 absolute -top-4 left-0">Função</label> {/* 💡 RÓTULO */}
+                <label htmlFor="filter-funcao" className="text-xs font-medium text-DarkGrey absolute -top-4 left-0">Função</label> {/* 💡 RÓTULO */}
                 <select 
                     id="filter-funcao"
                     value={selectedFunction} 
                     onChange={(e) => setSelectedFunction(e.target.value)}
-                    className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
+                    className="block w-full p-2 border border-Grey rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
                 >
                     {functionOptions.map(option => (
                         <option key={option} value={option}>{option}</option>
@@ -190,12 +174,12 @@ export function Turnos() {
             
             {/* Filtro de Setor */}
             <div className="w-40 relative">
-                <label htmlFor="filter-setor" className="text-xs font-medium text-gray-500 absolute -top-4 left-0">Setor</label> {/* 💡 RÓTULO */}
+                <label htmlFor="filter-setor" className="text-xs font-medium text-DarkGrey absolute -top-4 left-0">Setor</label> {/* 💡 RÓTULO */}
                 <select 
                     id="filter-setor"
                     value={selectedSector} 
                     onChange={(e) => setSelectedSector(e.target.value)}
-                    className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
+                    className="block w-full p-2 border border-Grey rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
                 >
                     {sectorOptions.map(option => (
                         <option key={option} value={option}>{option}</option>
@@ -207,20 +191,18 @@ export function Turnos() {
           </div>
           
           {/* Contagem de Colaboradores */}
-          <div className="p-2 border border-blue-500 rounded-lg bg-blue-50 text-blue-700 font-semibold text-center">
+          <div className="p-2 border border-Blue3 rounded-lg bg-blue-50 text-Blue3 font-semibold text-center">
             Colaboradores Disponíveis: 45
           </div>
         </div>
 
         {/* Busca */}
-        <div className="relative flex items-center w-full">
-            <svg className="h-5 w-5 text-gray-400 absolute left-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>
-            <input 
-                type="text" 
+        <div className="mt-2">
+            <SearchBar 
                 placeholder="Buscar colaborador por nome ou CPF..." 
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                onSearch={(texto) => setSearchTerm(texto)} 
+                className="w-full"
             />
-            <svg className="h-5 w-5 text-gray-400 absolute right-3 cursor-pointer hover:text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L13 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 019 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" /></svg>
         </div>
       </div>
 
@@ -228,63 +210,76 @@ export function Turnos() {
       <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-200 overflow-x-auto">
         <h2 className="text-lg font-semibold mb-4">Matriz de Cobertura por Setor (24 horas)</h2>
         
-        <div className="min-w-[1200px]"> {/* Container para scroll horizontal */}
+        <div className="min-w-[1200px]">
             
-            {/* Cabeçalho das Horas (0h, 1h, ... 23h) */}
-            <div className="grid grid-cols-[120px_repeat(24,_1fr)] text-center text-xs font-medium border-b border-gray-300 pb-1">
-                <div className="text-left font-semibold text-sm">Setor</div>
-                {horas.map(h => (
-                    <div key={h} className="text-gray-500">{h}h</div>
-                ))}
+            {/* Cabeçalho */}
+            <div className="flex border-b border-gray-300 pb-2 mb-2">
+                <div className="w-[150px] shrink-0 pl-2 text-xs font-bold text-Grey text-left">SETOR</div>
+                <div className="flex-1 grid grid-cols-[repeat(24,_1fr)] text-center text-xs font-bold text-Grey">
+                    {horas.map(h => <div key={h}>{h}h</div>)}
+                </div>
             </div>
 
-            {/* Linhas da Matriz (Setores) */}
+            {/* Linhas da Matriz */}
             {filteredSectors.length > 0 ? (
                 filteredSectors.map(setorKey => ( 
-                    <div key={setorKey} className="grid grid-cols-[120px_repeat(24,_1fr)] items-start border-b border-gray-100 last:border-b-0 py-2">
+                    <div key={setorKey} className="flex items-center border-b border-LightGrey last:border-b-0 py-4 hover:bg-gray-50 transition-colors">
                         
-                        {/* Coluna do Setor e Lacunas */}
-                        <div className="text-sm font-medium text-gray-700 h-full flex flex-col justify-start pt-1 pr-2">
-                            <span className="mb-1">{setorKey}</span>
-                            <span className="text-[10px] text-red-600 flex items-center gap-1">
-                                <span className="text-red-500">⚠</span> {mockMatriz[setorKey].lacunas}
-                            </span>
+                        {/* LADO ESQUERDO: Nome do Setor */}
+                        <div className="w-[150px] shrink-0 pl-2 pr-4 border-r border-LightGrey mr-2">
+                            <span className="text-sm font-bold text-Black block">{setorKey}</span>
                         </div>
 
-                        {/* Células de Cobertura/Lacuna (24 horas) */}
-                        {mockMatriz[setorKey].horas.map((status, index) => {
-                            const cellClass = status === 1 
-                                ? 'bg-blue-400 hover:bg-blue-500' // Cobertura (Azul)
-                                : 'bg-red-400 hover:bg-red-500';  // Lacuna (Vermelho)
+                        {/* LADO DIREITO: Container Vertical*/}
+                        <div className="flex-1 flex flex-col justify-center">
+                            
+                            {/* 1. As Barras (Grid de 24) */}
+                            <div className="grid grid-cols-[repeat(24,_1fr)] gap-[2px] mb-1">
+                                {mockMatriz[setorKey].horas.map((status, index) => (
+                                    <div 
+                                        key={index} 
+                                        onClick={() => handleCellClick(setorKey, index, status)}
+                                        className={`
+                                            h-10 rounded cursor-pointer transition-all duration-200
+                                            ${status === 1 
+                                                ? 'bg-Blue1 hover:bg-Blue3 hover:Blue5'
+                                                : 'bg-red-400 hover:bg-red-500'
+                                            }
+                                        `}
+                                        title={status === 1 ? "Cobertura OK" : "Sem Cobertura"}
+                                    ></div>
+                                ))}
+                            </div>
 
-                            return (
-                                <div 
-                                    key={index} 
-                                    onClick={() => handleCellClick(setorKey, index, status)}
-                                    className={`${cellClass} h-8 cursor-pointer rounded-sm mx-[1px] transition duration-150`}
-                                >
-                                    {/* Células vazias que reagem ao clique */}
-                                </div>
-                            );
-                        })}
+                            {/* 2. O Texto de Lacuna */}
+                            <div className="h-4">
+                                {mockMatriz[setorKey].lacunas && (
+                                    <span className="text-[11px] font-bold text-Red flex items-center gap-1 animate-pulse">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" className="w-3 h-3">
+                                            <path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/>
+                                        </svg>
+                                        {mockMatriz[setorKey].lacunas}
+                                    </span>
+                                )}
+                            </div>
+
+                        </div>
                     </div>
                 ))
             ) : (
-                <div className="p-4 text-center text-gray-500">
-                    Nenhum setor encontrado para os filtros selecionados.
-                </div>
+                <div className="p-8 text-center text-Grey">Nenhum setor encontrado.</div>
             )}
         </div>
         
         {/* Legenda */}
-        <div className="mt-6 flex items-center gap-6 text-sm">
+        <div className="mt-6 flex items-center gap-6 text-sm border-t border-LightGrey pt-4">
             <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-blue-400 rounded-sm"></span>
-                <span>Com Cobertura</span>
+                <span className="w-4 h-4 bg-Blue1 rounded"></span>
+                <span className="text-DarkGrey">Com Cobertura</span>
             </div>
             <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-red-400 rounded-sm"></span>
-                <span>Lacuna (Sem Cobertura)</span>
+                <span className="w-4 h-4 bg-red-200 rounded"></span>
+                <span className="text-DarkGrey">Lacuna (Sem Cobertura)</span>
             </div>
         </div>
       </div>
