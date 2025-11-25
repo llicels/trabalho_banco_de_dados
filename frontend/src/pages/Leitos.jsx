@@ -3,7 +3,8 @@ import MapaAlaModal from '../components/leitos/MapaAlaModal';
 import DetalhesOcupacaoModal from '../components/leitos/DetalhesOcupacaoModal';
 import AtribuirPacienteModal from '../components/leitos/AtribuirPacienteModal';
 import MudarStatusModal from '../components/leitos/MudarStatusModal';
-import { SearchBar } from '../components/SearchBar'; 
+import { FilterSelect } from '../components/FilterSelect';
+
 
 
 // --- Dados Mockados (completos) ---
@@ -108,70 +109,58 @@ export function Leitos() {
 
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-8 pt-4 bg-gray-50 min-h-full">
   
             {/* Contadores */}
-            <div className="flex gap-6 mb-6">
+            <div className="flex gap-6 mb-4">
                 <div className="text-lg font-semibold">Salas Disponíveis: <span className="text-blue-600">{mockAlas.length}/5</span></div>
                 <div className="text-lg font-semibold">Leitos Disponíveis: <span className="text-green-600">{leitosDisponiveis}/{totalLeitos}</span></div>
             </div>
 
             {/* 2. FILTROS E BUSCA (Simulação) */}
             <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">
+                
                 <div className="flex items-start justify-start gap-4 mb-4">
-                    
-                    {/* Tipo de Sala/Ala */}
-                    <div className="w-48 relative pt-4">
-                         <label htmlFor="filter-tipo" className="text-xs font-medium text-gray-500 absolute top-0 left-0">Tipo de Sala</label>
-                        <select value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}
-                            className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700">
-                            <option value="Todos">Todos</option>
-                            <option value="UTI">UTI</option>
-                            <option value="Quarto">Quarto</option>
-                            <option value="Observação">Observação</option>
-                        </select>
-                         <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                    </div>
 
-                    {/* Classificação de Risco */}
-                    <div className="w-48 relative pt-4">
-                        <label htmlFor="filter-risco" className="text-xs font-medium text-gray-500 absolute top-0 left-0">Classificação de Risco</label>
-                        <select value={riscoFiltro} onChange={(e) => setRiscoFiltro(e.target.value)}
-                            className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700">
-                            <option value="Todos">Todos</option>
-                            <option value="Alto">Alto</option>
-                            <option value="Médio">Médio</option>
-                            <option value="Baixo">Baixo</option>
-                        </select>
-                        <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                    </div>
+                    <FilterSelect
+                        label="Tipo de Sala"
+                        value={tipoFiltro}
+                        onChange={(e) => setTipoFiltro(e.target.value)}
+                        options={["Todos", "UTI", "Quarto", "Observação"]}
+                        className="w-48"
+                    />
 
-                    {/* Status */}
-                    <div className="w-48 relative pt-4">
-                         <label htmlFor="filter-status-leito" className="text-xs font-medium text-gray-500 absolute top-0 left-0">Status</label>
-                        <select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)}
-                            className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700">
-                            <option value="Todos">Todos</option>
-                            <option value="Livre">Livre</option>
-                            <option value="Ocupado">Ocupado</option>
-                            <option value="Manutencao">Manutenção/Limpeza</option>
-                        </select>
-                        <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                    </div>
+                    <FilterSelect
+                        label="Classificação de Risco"
+                        value={riscoFiltro}
+                        onChange={(e) => setRiscoFiltro(e.target.value)}
+                        options={["Todos", "Alto", "Médio", "Baixo"]}
+                        className="w-48"
+                    />
+
+                    <FilterSelect
+                        label="Status"
+                        value={statusFiltro}
+                        onChange={(e) => setStatusFiltro(e.target.value)}
+                        options={["Todos", "Livre", "Ocupado", "Manutencao"]}
+                        className="w-48"
+                    />
+
                 </div>
+
             </div>
 
             {/* 3. ABAS DE NAVEGAÇÃO */}
             <div className="flex border-b border-gray-300 mb-6">
                 <button
                     onClick={() => setActiveTab('Leitos')}
-                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Leitos' ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
+                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Leitos' ? 'border-b-4 border-Blue1 text-Blue1 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                     Mapa de Leitos e Salas
                 </button>
                 <button
                     onClick={() => setActiveTab('Historico')}
-                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Historico' ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
+                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Historico' ? 'border-b-4 border-Blue1 text-Blue1 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                     Histórico de Ocupação
                 </button>

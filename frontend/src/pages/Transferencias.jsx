@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import DetalhesTransferenciaModal from '../components/transferencias/DetalhesTransferenciaModal';
-import { SearchBar } from '../components/SearchBar'; 
+import { SearchBar } from '../components/SearchBar';
+import { FilterSelect } from '../components/FilterSelect';
 
 
 // --- Dados Mockados ---
@@ -117,76 +118,62 @@ export function Transferencias() {
 
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-8 pt-4 bg-gray-50 min-h-full">
             
-            {/* 2. BARRA DE FILTROS E BUSCA */}
-            <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">
+            {/* BARRA DE FILTROS */}
+            <div className="bg-white p-6 pt-4 pb-4 rounded-xl shadow-sm border border-gray-200 mb-4">
+
+            <div className="flex flex-col lg:flex-row items-end justify-between gap-6">
                 
-                {/* Filtros Dropdown */}
-                <div className="flex items-center justify-between gap-4 mb-4">
-                    <div className="flex gap-4">
-                        
-                        {/* Status */}
-                        <div className="w-40 relative">
-                            <label htmlFor="filter-status" className="text-xs font-medium text-gray-500 absolute -top-4 left-0">Status</label>
-                            <select 
-                                id="filter-status"
-                                value={selectedStatus} 
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
-                            >
-                                {statusOptions.map(option => (<option key={option} value={option}>{option}</option>))}
-                            </select>
-                            <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                        </div>
+                {/* Filtros */}
+                <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+                
+                <FilterSelect 
+                    label="Status"
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    options={statusOptions}
+                    className="w-full sm:w-48"
+                />
 
-                        {/* Hospital Destino */}
-                        <div className="w-40 relative">
-                            <label htmlFor="filter-hospital" className="text-xs font-medium text-gray-500 absolute -top-4 left-0">Hospital Destino</label>
-                            <select 
-                                id="filter-hospital"
-                                value={selectedHospital} 
-                                onChange={(e) => setSelectedHospital(e.target.value)}
-                                className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
-                            >
-                                {hospitalOptions.map(option => (<option key={option} value={option}>{option}</option>))}
-                            </select>
-                            <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                        </div>
-                        
-                        {/* Período */}
-                        <div className="w-40 relative">
-                            <label htmlFor="filter-periodo" className="text-xs font-medium text-gray-500 absolute -top-4 left-0">Período</label>
-                            <select 
-                                id="filter-periodo"
-                                value={selectedPeriodo} 
-                                onChange={(e) => setSelectedPeriodo(e.target.value)}
-                                className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700"
-                            >
-                                {periodoOptions.map(option => (<option key={option} value={option}>{option}</option>))}
-                            </select>
-                            <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                        </div>
+                <FilterSelect 
+                    label="Hospital Destino"
+                    value={selectedHospital}
+                    onChange={(e) => setSelectedHospital(e.target.value)}
+                    options={hospitalOptions}
+                    className="w-full sm:w-48"
+                />
 
-                    </div>
-                    
-                    {/* Contagem Aguardando */}
-                    <div className="p-2 border border-yellow-600 rounded-lg bg-yellow-50 text-yellow-800 font-semibold text-center">
-                        Aguardando Transferência: {aguardandoCount}
-                    </div>
+                <FilterSelect 
+                    label="Período"
+                    value={selectedPeriodo}
+                    onChange={(e) => setSelectedPeriodo(e.target.value)}
+                    options={periodoOptions}
+                    className="w-full sm:w-48"
+                />
+
                 </div>
 
-                {/* Busca */}
-                <div className="relative">
-                    <SearchBar
-                        placeholder="Buscar paciente por nome ou CPF..."
-                        onSearch={handleSearchChange} 
-                        onSubmit={handleSearchChange}
-                        className="w-full"
-                        showFilter={false}
-                    />
+                {/* Badge de Contagem */}
+                <div className="px-4 py-2 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg font-semibold text-sm whitespace-nowrap">
+                Aguardando Transferência: {aguardandoCount}
                 </div>
+
             </div>
+
+            {/* BUSCA */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+                <SearchBar 
+                placeholder="Buscar paciente por nome ou CPF..." 
+                onSearch={handleSearchChange}
+                onSubmit={handleSearchChange}
+                className="w-full"
+                showFilter={false}
+                />
+            </div>
+
+            </div>
+
 
             {/* 3. TABELA DE TRANSFERÊNCIAS */}
             <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">

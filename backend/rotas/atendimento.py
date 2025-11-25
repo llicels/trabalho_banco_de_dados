@@ -3,7 +3,6 @@ from servicos.atendimento import AtendimentoDatabase
 
 atendimento_blueprint = Blueprint("atendimento", __name__)
 
-
 @atendimento_blueprint.route("/atendimentos", methods=["GET"])
 def get_atendimentos():
     id_atendimento = request.args.get("id", "")

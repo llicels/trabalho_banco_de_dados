@@ -161,6 +161,79 @@ export const dashboardService = {
       console.error("Erro API Conflitos:", error);
       return { total: 0, salas: [] };
     }
-  }
+  },
 
+  // 7. PRONTUÁRIOS - Buscar Paciente
+  getPacientes: async (cpf) => {
+    try {
+      // O backend filtra por CPF na rota GET /pacientes
+      const response = await fetch(`${API_URL}/pacientes?cpf=${cpf}`);
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("Erro ao buscar paciente:", error);
+      return [];
+    }
+  },
+
+  // 8. PRONTUÁRIOS - Histórico
+  getAtendimentosPorPaciente: async (cpf) => {
+    try {
+      // O backend exige data_inicio e data_fim. Vamos pegar um intervalo gigante.
+      const inicio = '1900-01-01';
+      const fim = '2100-12-31';
+      
+      const response = await fetch(`${API_URL}/atendimentos/consulta?cpf_paciente=${cpf}&data_inicio=${inicio}&data_fim=${fim}`);
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) return [];
+
+      // Formata os dados para o frontend
+      return data.map(item => ({
+        id_atendimento: item.id,
+        tipo: item.nivel_risco ? `Classificação: ${item.nivel_risco}` : "Atendimento Geral",
+        medico: "Dr(a). Responsável", // O backend retorna CPF, precisaríamos cruzar dados, mas ok por enquanto
+        queixa: item.observacoes,
+        data_atendimento: new Date(item.data_hora_entrada).toLocaleDateString('pt-BR'),
+        hora: new Date(item.data_hora_entrada).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+      }));
+
+    } catch (error) {
+      console.error("Erro ao buscar histórico:", error);
+      return [];
+    }
+  },
+
+  // 9. PRONTUÁRIOS - Detalhes (Ao clicar no histórico)
+  getDetalhesAtendimento: async (id) => {
+    try {
+      // Busca os dados principais + exames + medicamentos em paralelo
+      const [resPrincipal, resAmostras, resMedicamentos] = await Promise.all([
+        fetch(`${API_URL}/atendimentos?id=${id}`),
+        fetch(`${API_URL}/atendimentos/${id}/amostras`),
+        fetch(`${API_URL}/atendimentos/${id}/medicamentos`)
+      ]);
+
+      const principal = (await resPrincipal.json())[0]; // Pega o primeiro da lista
+      const amostras = await resAmostras.json();
+      const medicamentos = await resMedicamentos.json(); // O backend pode retornar msg de erro se vazio
+
+      return {
+        ...principal,
+        // Formata exames para a aba "Diagnósticos" e "Exames"
+        exames: Array.isArray(amostras) ? amostras.map(a => ({
+          nome: a.exame,
+          cid: a.tipo, // Usando tipo como "categoria" visual
+          resultado: "Aguardando", // Backend não tem campo resultado na tabela amostra
+          data: a.previsao_liberacao
+        })) : [],
+        // Formata medicamentos para a aba "Prescrições"
+        medicamentos: Array.isArray(medicamentos) ? medicamentos : [] // Se der erro, manda array vazio
+      };
+
+    } catch (error) {
+      console.error("Erro detalhes atendimento:", error);
+      return {};
+    }
+  }
 };
