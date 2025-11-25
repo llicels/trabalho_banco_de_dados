@@ -163,77 +163,75 @@ export const dashboardService = {
     }
   },
 
-  // 7. PRONTUÁRIOS - Buscar Paciente
-  getPacientes: async (cpf) => {
+  // 7. PRONTUÁRIOS (Busca Blindada)
+  getPacienteCompleto: async (cpf) => {
     try {
-      // O backend filtra por CPF na rota GET /pacientes
-      const response = await fetch(`${API_URL}/pacientes?cpf=${cpf}`);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error("Erro ao buscar paciente:", error);
-      return [];
-    }
-  },
-
-  // 8. PRONTUÁRIOS - Histórico
-  getAtendimentosPorPaciente: async (cpf) => {
-    try {
-      // O backend exige data_inicio e data_fim. Vamos pegar um intervalo gigante.
+      // Datas para busca de histórico
       const inicio = '1900-01-01';
       const fim = '2100-12-31';
-      
-      const response = await fetch(`${API_URL}/atendimentos/consulta?cpf_paciente=${cpf}&data_inicio=${inicio}&data_fim=${fim}`);
-      const data = await response.json();
-      
-      if (!Array.isArray(data)) return [];
 
-      // Formata os dados para o frontend
-      return data.map(item => ({
-        id_atendimento: item.id,
-        tipo: item.nivel_risco ? `Classificação: ${item.nivel_risco}` : "Atendimento Geral",
-        medico: "Dr(a). Responsável", // O backend retorna CPF, precisaríamos cruzar dados, mas ok por enquanto
-        queixa: item.observacoes,
-        data_atendimento: new Date(item.data_hora_entrada).toLocaleDateString('pt-BR'),
-        hora: new Date(item.data_hora_entrada).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
-      }));
-
-    } catch (error) {
-      console.error("Erro ao buscar histórico:", error);
-      return [];
-    }
-  },
-
-  // 9. PRONTUÁRIOS - Detalhes (Ao clicar no histórico)
-  getDetalhesAtendimento: async (id) => {
-    try {
-      // Busca os dados principais + exames + medicamentos em paralelo
-      const [resPrincipal, resAmostras, resMedicamentos] = await Promise.all([
-        fetch(`${API_URL}/atendimentos?id=${id}`),
-        fetch(`${API_URL}/atendimentos/${id}/amostras`),
-        fetch(`${API_URL}/atendimentos/${id}/medicamentos`)
-      ]);
-
-      const principal = (await resPrincipal.json())[0]; // Pega o primeiro da lista
-      const amostras = await resAmostras.json();
-      const medicamentos = await resMedicamentos.json(); // O backend pode retornar msg de erro se vazio
-
-      return {
-        ...principal,
-        // Formata exames para a aba "Diagnósticos" e "Exames"
-        exames: Array.isArray(amostras) ? amostras.map(a => ({
-          nome: a.exame,
-          cid: a.tipo, // Usando tipo como "categoria" visual
-          resultado: "Aguardando", // Backend não tem campo resultado na tabela amostra
-          data: a.previsao_liberacao
-        })) : [],
-        // Formata medicamentos para a aba "Prescrições"
-        medicamentos: Array.isArray(medicamentos) ? medicamentos : [] // Se der erro, manda array vazio
+      // Helper: Tenta buscar, se der erro retorna Array Vazio []
+      const safeFetch = async (url) => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(res.status); // Se for 500 ou 404, joga pro catch
+            const json = await res.json();
+            return Array.isArray(json) ? json : [];
+        } catch (e) {
+            console.warn(`Falha ao carregar dados opcionais (${url}):`, e);
+            return []; // Retorna vazio para não quebrar a tela
+        }
       };
 
+      // 1. Busca o Paciente (Esse é OBRIGATÓRIO, se falhar, não tem o que mostrar)
+      const resPaciente = await fetch(`${API_URL}/pacientes?cpf=${cpf}`);
+      const pacienteLista = await resPaciente.json();
+      const paciente = Array.isArray(pacienteLista) ? pacienteLista[0] : null;
+
+      if (!paciente) return null;
+
+      // 2. Busca os Opcionais em Paralelo (Usando o safeFetch)
+      const [
+        condicoes, 
+        alergias, 
+        atendimentosRaw,
+        transferenciasRaw, // <--- O culpado do erro 500
+        examesRaw
+      ] = await Promise.all([
+        safeFetch(`${API_URL}/pacientes/${cpf}/condicoes`),
+        safeFetch(`${API_URL}/pacientes/${cpf}/alergias`),
+        safeFetch(`${API_URL}/atendimentos/consulta?cpf_paciente=${cpf}&data_inicio=${inicio}&data_fim=${fim}`),
+        safeFetch(`${API_URL}/transferencias/paciente?cpf=${cpf}`), 
+        safeFetch(`${API_URL}/atendimentos/exames/historico?cpf=${cpf}&data_inicio=${inicio}&data_fim=${fim}`)
+      ]);
+
+      // 3. Formatar Histórico de Atendimentos
+      const historicoFormatado = atendimentosRaw.map(item => ({
+        id_atendimento: item.id,
+        tipo: item.nivel_risco ? `Classificação: ${item.nivel_risco}` : "Atendimento Geral",
+        medico: "Dr(a). Responsável",
+        queixa: item.observacoes,
+        data_atendimento: item.data_hora_entrada ? new Date(item.data_hora_entrada).toLocaleDateString('pt-BR') : "--/--/----",
+        hora: item.data_hora_entrada ? new Date(item.data_hora_entrada).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : "--:--",
+        sinais: {
+          temp: item.temperatura,
+          pressao: item.pressao_arterial,
+          freq: item.frequencia_cardiaca
+        }
+      }));
+
+      return {
+        ...paciente,
+        condicoes,
+        alergias,
+        historico_atendimentos: historicoFormatado,
+        historico_transferencias: transferenciasRaw,
+        historico_exames: examesRaw
+      };
+      
     } catch (error) {
-      console.error("Erro detalhes atendimento:", error);
-      return {};
+      console.error("Erro fatal ao buscar paciente:", error);
+      return null;
     }
-  }
+  },
 };
