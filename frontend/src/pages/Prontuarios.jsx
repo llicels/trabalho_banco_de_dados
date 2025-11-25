@@ -1,231 +1,250 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DetalhesAtendimentoModal from '../components/prontuarios/DetalhesAtendimentoModal';
-import { SearchBar } from '../components/SearchBar'; 
-
-
-// --- Dados Mockados ---
-const mockPatientData = {
-    nome: "João da Silva Santos",
-    cpf: "123.456.789-00",
-    nascimento: "01/01/1975",
-};
-
-const mockHistoricoCompleto = [
-    { id: 101, tipo: "Atendimento Emergência", medico: "Dr. João Silva", queixa: "Dor no joelho", data: "02/02/2020", hora: "14:30",
-        detalhes: { queixaPrincipal: "Dor abdominal forte", diagnostico: ["Gastrite aguda (CID: K29.0)"], prescricoes: ["Omeprazol 20mg - 1x ao dia", "Dieta leve"], exames: ["Hemograma completo - Resultado: Normal", "Ultrassom abdominal - Sem alterações"], }
-    },
-    { id: 102, tipo: "Atendimento Triagem", medico: "Dr. João Silva", queixa: "Infecção respiratória", data: "05/11/2025", hora: "09:00",
-        detalhes: { queixaPrincipal: "Tosse e febre", diagnostico: ["Infecção viral respiratória (CID: J06.9)"], prescricoes: ["Dipirona 500mg - 6/6h se dor"], exames: ["Raio-X Tórax - Resultado: Sem alterações"], }
-    },
-    { id: 103, tipo: "Atendimento Emergência", medico: "Dr. João Silva", queixa: "Queda", data: "02/02/2020", hora: "14:30",
-        detalhes: { queixaPrincipal: "Queda", diagnostico: ["Fratura no braço"], prescricoes: ["Imobilização", "Analgésico"], exames: [], }
-    },
-    { id: 104, tipo: "Atendimento Emergência", medico: "Dr. João Silva", queixa: "Corte na mão", data: "02/02/2020", hora: "14:30",
-        detalhes: { queixaPrincipal: "Corte na mão", diagnostico: ["Lacerção"], prescricoes: ["Sutura", "Antisséptico"], exames: [], }
-    },
-];
-
-const mockAbasData = {
-    Historico: mockHistoricoCompleto, 
-    Diagnosticos: [
-        { atendimentoId: 101, titulo: "Gastrite aguda", cid: "K29.0", data: "08/11/2025" },
-        { atendimentoId: 102, titulo: "Infecção viral respiratória", cid: "J06.9", data: "05/11/2025" },
-    ],
-    Prescricoes: [
-        { atendimentoId: 101, titulo: "Omeprazol 20mg", uso: "1x ao dia - Duração: 14 dias", data: "08/11/2025" },
-        { atendimentoId: 102, titulo: "Dipirona 500mg", uso: "6/6h se dor - Duração: 5 dias", data: "05/11/2025" },
-    ],
-    Exames: [
-        { atendimentoId: 101, titulo: "Hemograma completo", resultado: "Normal", data: "08/11/2025" },
-        { atendimentoId: 102, titulo: "Raio-X Tórax", resultado: "Sem alterações", data: "05/11/2025" },
-    ],
-};
-// -------------------------------------------------------------------------
-
+import { SearchBar } from '../components/SearchBar';
+import { dashboardService } from '../services/api';
 
 export function Prontuarios() {
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const buscaInicial = searchParams.get('busca') || '';
+
+    const [searchTerm, setSearchTerm] = useState(buscaInicial);
     const [patientFound, setPatientFound] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const [pacienteData, setPacienteData] = useState(null);
     const [activeTab, setActiveTab] = useState('Historico');
     const [selectedAtendimento, setSelectedAtendimento] = useState(null);
 
     const tabOptions = [
-        { key: 'Historico', label: 'Histórico de Atendimentos' },
-        { key: 'Diagnosticos', label: 'Diagnósticos' },
-        { key: 'Prescricoes', label: 'Prescrições' },
-        { key: 'Exames', label: 'Exames Realizados' },
+        { key: 'Historico', label: 'Histórico Clínico' },
+        { key: 'Transferencias', label: 'Transferências' },
+        { key: 'Exames', label: 'Histórico de Exames' },
     ];
 
-    // Lógica de busca final: acionada ao clicar ou pressionar Enter
-    const handleSearchSubmit = (value) => {
-        const query = value.toLowerCase();
-        
-        // Simulação de busca: 'joao' ou '123' encontram o paciente
-        if (query.includes('joao') || query.includes('123')) {
+    useEffect(() => {
+        if (buscaInicial) {
+            handleSearchSubmit(buscaInicial);
+        }
+    }, [buscaInicial]);
+
+    // ------------------------------
+    // 1. BUSCAR PACIENTE NO BACKEND
+    // ------------------------------
+    const handleSearchSubmit = async (value) => {
+        if (!value) return;
+        setLoading(true);
+        try {
+            // 1. Busca Paciente
+            const dadosCompletos = await dashboardService.getPacienteCompleto(value);
+
+            if (!dadosCompletos) {
+                setPatientFound(false);
+                setPacienteData(null);
+                return;
+            }
+
+            setPacienteData(dadosCompletos);
             setPatientFound(true);
-            setActiveTab('Historico');
-        } else {
+            setActiveTab("Historico");
+
+        } catch (err) {
+            console.error("Erro ao buscar:", err);
             setPatientFound(false);
+        } finally {
+            setLoading(false);
         }
     };
-    
-    // Certifica-se de que o valor de busca foi atualizado
-    const handleSearchChange = (value) => {
-        setSearchTerm(value);
-    };
 
-    // Abre o modal de detalhes do atendimento
-    const openAtendimentoDetails = (atendimentoId) => {
-        const atendimento = mockHistoricoCompleto.find(at => at.id === atendimentoId);
-        setSelectedAtendimento(atendimento);
-    };
-
-    const closeAtendimentoDetails = () => {
-        setSelectedAtendimento(null);
-    };
-
-    // --- Renderização da Aba Ativa ---
     const renderTabContent = () => {
-        const data = mockAbasData[activeTab];
+        if (!pacienteData) return null;
 
-        if (activeTab === 'Historico') {
+        // 1. ABA HISTÓRICO (Com Sinais Vitais)
+        if (activeTab === "Historico") {
+            const lista = pacienteData.historico_atendimentos || [];
+            if (lista.length === 0) return <div className="p-8 text-center text-Grey italic">Nenhum atendimento registrado.</div>;
+
             return (
-                <div className="space-y-2">
-                    {data.map(item => (
-                        <button
-                            key={item.id}
-                            onClick={() => openAtendimentoDetails(item.id)}
-                            className="w-full text-left p-4 bg-white rounded-lg border-b border-gray-100 shadow-sm hover:bg-gray-50 transition grid grid-cols-5 gap-4 items-center"
-                        >
-                            <div className="col-span-2">
-                                <p className="font-semibold text-gray-800">{item.tipo}</p>
-                                <p className="text-sm text-gray-500">{item.medico}</p>
+                <div className="space-y-3">
+                    {lista.map((item, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl border border-LightGrey shadow-sm hover:border-Blue1/50 transition-all group">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <span className="font-bold text-Blue3 text-lg block">
+                                        {item.tipo}
+                                    </span>
+                                    <span className="text-xs text-Grey uppercase tracking-wide font-bold">
+                                        {item.medico}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="block font-bold text-Black">{item.data_atendimento}</span>
+                                    <span className="text-xs text-Grey">{item.hora}</span>
+                                </div>
                             </div>
-                            <div className="col-span-2">
-                                <p className="text-sm text-gray-600">Queixa: <span className="font-medium">{item.queixa}</span></p>
+                            
+                            {/* Sinais Vitais (Se existirem) */}
+                            {item.sinais && (item.sinais.temp || item.sinais.pressao) && (
+                                <div className="flex gap-4 mb-3 mt-2">
+                                    {item.sinais.temp && (
+                                        <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-100">
+                                            Temp: {item.sinais.temp}°C
+                                        </span>
+                                    )}
+                                    {item.sinais.pressao && (
+                                        <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100">
+                                            PA: {item.sinais.pressao}
+                                        </span>
+                                    )}
+                                    {item.sinais.freq && (
+                                        <span className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded border border-red-100">
+                                            FC: {item.sinais.freq} bpm
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="text-sm text-DarkGrey bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <span className="font-bold text-Black">Observações: </span>
+                                {item.queixa || "Sem observações."}
                             </div>
-                            <div className="text-right text-sm text-gray-700">
-                                <p>{item.data}</p>
-                                <p>{item.hora}</p>
-                            </div>
-                        </button>
+                        </div>
                     ))}
                 </div>
             );
         }
 
-        // Renderização para Diagnósticos, Prescrições e Exames
-        return (
-            <div className="space-y-4">
-                {data.map(item => (
-                    <div key={item.id} className="w-full p-4 bg-white rounded-lg border border-gray-100 shadow-sm grid grid-cols-2">
-                        <div>
-                            {/* Conteúdo da Linha */}
-                            {activeTab === 'Diagnosticos' && (
-                                <>
-                                    <p className="font-semibold text-gray-800">{item.titulo}</p>
-                                    <p className="text-sm text-gray-500">CID: {item.cid}</p>
-                                </>
-                            )}
-                            {activeTab === 'Prescricoes' && (
-                                <>
-                                    <p className="font-semibold text-gray-800">{item.titulo}</p>
-                                    <p className="text-sm text-gray-600">Uso: <span className="text-green-700">{item.uso}</span></p>
-                                </>
-                            )}
-                            {activeTab === 'Exames' && (
-                                <>
-                                    <p className="font-semibold text-gray-800">{item.titulo}</p>
-                                    <p className={`text-sm ${item.resultado === 'Normal' ? 'text-green-600' : 'text-red-600'}`}>Resultado: {item.resultado}</p>
-                                </>
-                            )}
+        // 2. ABA TRANSFERÊNCIAS (Nova!)
+        if (activeTab === "Transferencias") {
+            const lista = pacienteData.historico_transferencias || [];
+            if (lista.length === 0) return <div className="p-8 text-center text-Grey italic">Nenhuma transferência registrada.</div>;
+
+            return (
+                <div className="space-y-3">
+                    {lista.map((item, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl border border-LightGrey shadow-sm flex justify-between items-center">
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-Black">Destino: Hospital ID {item.id_hospital}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                                        item.status_transferencia === 'Concluída' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                    }`}>
+                                        {item.status_transferencia}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-DarkGrey">Motivo: {item.justificativa}</p>
+                                <p className="text-xs text-Grey mt-1">Transporte: {item.transporte}</p>
+                            </div>
+                            <div className="text-right text-sm font-bold text-Blue3">
+                                {new Date(item.data_transferencia).toLocaleDateString('pt-BR')}
+                            </div>
                         </div>
-                        <div className="text-right text-sm text-gray-700 font-medium pt-1">
-                            {item.data}
+                    ))}
+                </div>
+            );
+        }
+
+        // 3. ABA EXAMES
+        if (activeTab === "Exames") {
+             const lista = pacienteData.historico_exames || [];
+             // Se a lista vier vazia, pode ser que o backend retorne estrutura diferente, 
+             // mas o layout está pronto para receber: [{exame: "...", data: "..."}]
+             if (lista.length === 0) return <div className="p-8 text-center text-Grey italic">Nenhum exame no histórico.</div>;
+
+             return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {lista.map((item, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl border border-LightGrey shadow-sm">
+                            <p className="font-bold text-Black">{item.exame || "Exame"}</p>
+                            <p className="text-sm text-DarkGrey mt-1">Tipo: {item.tipo}</p>
+                            <p className="text-xs text-Grey mt-2">Solicitado em: {new Date(item.data_solicitacao || Date.now()).toLocaleDateString('pt-BR')}</p>
                         </div>
-                    </div>
-                ))}
-            </div>
-        );
+                    ))}
+                </div>
+             );
+        }
     };
 
+    // ------------------------------
+    // RENDERIZAÇÃO GERAL
+    // ------------------------------
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-8 pt-4 bg-LightGrey min-h-full">
 
-            {/* 2. BUSCA DO PACIENTE (Componente SearchBar) */}
-            <div className="mb-6">
+            {/* Busca */}
+            <div className="mb-6 flex items-center gap-4">
                 <SearchBar
                     placeholder="Buscar paciente por nome ou CPF..."
-                    // Atualiza o searchTerm enquanto digita
-                    onSearch={handleSearchChange} 
-                    // Aciona a busca quando Enter é pressionado
-                    onSubmit={handleSearchSubmit} 
-                    // Ajustes de estilo para a SearchBar
+                    onSearch={(val) => setSearchTerm(val)}
+                    onSubmit={(val) => handleSearchSubmit(val)}
                     className="w-full"
-                    showFilter={false} // Não mostra o ícone de filtro lateral se não for usado
+                    showFilter={false}
                 />
-            </div>
-            
-            {/* Botão manual de Busca */}
-            <div className="mb-6 flex justify-end">
-                 <button onClick={() => handleSearchSubmit(searchTerm)} className="py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-                     Buscar Prontuário
-                 </button>
+
+                <button
+                    onClick={() => handleSearchSubmit(searchTerm)}
+                    className="py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                    Buscar
+                </button>
             </div>
 
+            {loading && <div className="text-center py-12 text-Blue3 font-bold animate-pulse">Carregando Prontuário...</div>}
 
-            {/* 3. CONTEÚDO DO PRONTUÁRIO */}
-            {patientFound && (
-                <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-200">
+            {!loading && patientFound && pacienteData && (
+                <div className="max-w-5xl mx-auto bg-PureWhite rounded-2xl shadow-lg border border-LightGrey overflow-hidden">
                     
-                    {/* Dados do Paciente */}
-                    <div className="mb-6 pb-4 border-b border-gray-200">
-                        <p className="text-lg font-bold text-gray-800">{mockPatientData.nome}</p>
-                        <p className="text-sm text-gray-600">
-                            CPF: <span className="font-medium">{mockPatientData.cpf}</span> | 
-                            Data de Nascimento: <span className="font-medium">{mockPatientData.nascimento}</span>
-                        </p>
+                    {/* Cabeçalho do Paciente */}
+                    <div className="bg-gray-50 p-6 border-b border-LightGrey flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-Black mb-1">{pacienteData.nome}</h2>
+                            <div className="flex flex-wrap gap-4 text-sm text-DarkGrey">
+                                <span className="bg-white px-3 py-1 rounded border border-LightGrey font-mono font-bold">CPF: {pacienteData.cpf}</span>
+                                <span className="py-1">Nasc: <strong>{pacienteData.data_nascimento}</strong></span>
+                            </div>
+                            
+                            {/* Tags de Alerta */}
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {pacienteData.alergias.map((a, i) => (
+                                    <span key={i} className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full border border-red-200">
+                                        {a.alergia}
+                                    </span>
+                                ))}
+                                {pacienteData.condicoes.map((c, i) => (
+                                    <span key={i} className="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full border border-yellow-200">
+                                        {c.condicao}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Abas de Navegação */}
-                    <div className="flex border-b border-gray-300 mb-6">
+                    {/* Abas */}
+                    <div className="flex border-b border-LightGrey bg-white px-6 overflow-x-auto">
                         {tabOptions.map(tab => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`
-                                    py-2 px-6 text-sm font-semibold transition -mb-[1px]
-                                    ${activeTab === tab.key 
-                                        ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                    }
-                                `}
+                                className={`py-4 px-6 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === tab.key ? 'border-Blue1 text-Blue1' : 'border-transparent text-Grey hover:text-Black hover:bg-gray-50'}`}
                             >
                                 {tab.label}
                             </button>
                         ))}
                     </div>
 
-                    {/* Conteúdo da Aba */}
-                    <div className="min-h-[300px]">
+                    {/* Conteúdo */}
+                    <div className="p-6 bg-gray-50/30 min-h-[400px]">
                         {renderTabContent()}
                     </div>
                 </div>
             )}
-            
-            {!patientFound && searchTerm.length > 0 && (
-                <div className="p-10 text-center text-gray-500 bg-white rounded-xl shadow-xl">
-                    Paciente com nome/CPF "{searchTerm}" não encontrado. Por favor, tente novamente.
-                </div>
-            )}
 
-            {/* MODAL DE DETALHES DO ATENDIMENTO */}
-            {selectedAtendimento && (
-                <DetalhesAtendimentoModal 
-                    atendimento={selectedAtendimento} 
-                    onClose={closeAtendimentoDetails} 
+            {/* {selectedAtendimento && (
+                <DetalhesAtendimentoModal
+                    atendimento={selectedAtendimento}
+                    onClose={closeAtendimentoDetails}
                 />
-            )}
+            )} */}
         </div>
     );
 }

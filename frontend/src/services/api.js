@@ -161,6 +161,77 @@ export const dashboardService = {
       console.error("Erro API Conflitos:", error);
       return { total: 0, salas: [] };
     }
-  }
+  },
 
+  // 7. PRONTUÁRIOS (Busca Blindada)
+  getPacienteCompleto: async (cpf) => {
+    try {
+      // Datas para busca de histórico
+      const inicio = '1900-01-01';
+      const fim = '2100-12-31';
+
+      // Helper: Tenta buscar, se der erro retorna Array Vazio []
+      const safeFetch = async (url) => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(res.status); // Se for 500 ou 404, joga pro catch
+            const json = await res.json();
+            return Array.isArray(json) ? json : [];
+        } catch (e) {
+            console.warn(`Falha ao carregar dados opcionais (${url}):`, e);
+            return []; // Retorna vazio para não quebrar a tela
+        }
+      };
+
+      // 1. Busca o Paciente (Esse é OBRIGATÓRIO, se falhar, não tem o que mostrar)
+      const resPaciente = await fetch(`${API_URL}/pacientes?cpf=${cpf}`);
+      const pacienteLista = await resPaciente.json();
+      const paciente = Array.isArray(pacienteLista) ? pacienteLista[0] : null;
+
+      if (!paciente) return null;
+
+      // 2. Busca os Opcionais em Paralelo (Usando o safeFetch)
+      const [
+        condicoes, 
+        alergias, 
+        atendimentosRaw,
+        transferenciasRaw, // <--- O culpado do erro 500
+        examesRaw
+      ] = await Promise.all([
+        safeFetch(`${API_URL}/pacientes/${cpf}/condicoes`),
+        safeFetch(`${API_URL}/pacientes/${cpf}/alergias`),
+        safeFetch(`${API_URL}/atendimentos/consulta?cpf_paciente=${cpf}&data_inicio=${inicio}&data_fim=${fim}`),
+        safeFetch(`${API_URL}/transferencias/paciente?cpf=${cpf}`), 
+        safeFetch(`${API_URL}/atendimentos/exames/historico?cpf=${cpf}&data_inicio=${inicio}&data_fim=${fim}`)
+      ]);
+
+      // 3. Formatar Histórico de Atendimentos
+      const historicoFormatado = atendimentosRaw.map(item => ({
+        id_atendimento: item.id,
+        tipo: item.nivel_risco ? `Classificação: ${item.nivel_risco}` : "Atendimento Geral",
+        medico: "Dr(a). Responsável",
+        queixa: item.observacoes,
+        data_atendimento: item.data_hora_entrada ? new Date(item.data_hora_entrada).toLocaleDateString('pt-BR') : "--/--/----",
+        hora: item.data_hora_entrada ? new Date(item.data_hora_entrada).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : "--:--",
+        sinais: {
+          temp: item.temperatura,
+          pressao: item.pressao_arterial,
+          freq: item.frequencia_cardiaca
+        }
+      }));
+
+      return {
+        ...paciente,
+        condicoes,
+        alergias,
+        historico_atendimentos: historicoFormatado,
+        historico_transferencias: transferenciasRaw,
+        historico_exames: examesRaw
+      };
+      
+    } catch (error) {
+      console.error("Erro fatal ao buscar paciente:", error);
+      return null;
+    }
+  },
 };

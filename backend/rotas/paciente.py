@@ -3,7 +3,6 @@ from servicos.paciente import PacienteDatabase
 
 paciente_blueprint = Blueprint("paciente", __name__)
 
-
 @paciente_blueprint.route("/pacientes", methods=["GET"])
 def get_pacientes():
     cpf = request.args.get("cpf", "")

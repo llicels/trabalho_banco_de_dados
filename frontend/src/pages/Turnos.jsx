@@ -14,10 +14,10 @@ const mockColaboradores = [
 ];
 
 const mockMatriz = {
-  Emergência: { horas: [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 4h–7h, 13h–16h" },
+  Emergencia: { horas: [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 4h–7h, 13h–16h" },
   Triagem: { horas: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], lacunas: "Lacunas: 0h–7h, 13h–24h" },
-  Observação: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–7h" },
-  Medicação: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–13h" },
+  Observacao: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–7h" },
+  Medicacao: { horas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], lacunas: "Lacunas: 0h–13h" },
 };
 
 const mockEscalaDetalhe = {

@@ -15,11 +15,11 @@ export function Agendas() {
   const mockEventos = [
     // Conflito REAL A: Mesmo dia (3), mesma sala (Sala 3), mesmo horário (10h–11h)
     { id: 1, day: 3, sala: "Sala 3", desc: "Dr. Silva e Dr. Santos", hora: "10h–11h" },
-    { id: 5, day: 3, sala: "Sala 3", desc: "Reunião de Equipe", hora: "10h–11h" }, // <-- CONFLITO!
+    { id: 5, day: 3, sala: "Sala 3", desc: "Reunião de Equipe", hora: "10h–11h" },
     
     // Conflito REAL B: Outro conflito para testar o agrupamento
     { id: 6, day: 15, sala: "Sala 1", desc: "Consulta Dra. Ana", hora: "09h–10h" },
-    { id: 7, day: 15, sala: "Sala 1", desc: "Exame de Rotina", hora: "09h–10h" }, // <-- CONFLITO!
+    { id: 7, day: 15, sala: "Sala 1", desc: "Exame de Rotina", hora: "09h–10h" },
     
     // NÃO é Conflito (Sala diferente)
     { id: 2, day: 3, sala: "Sala 1", desc: "Dra. Maria e Dra. Ana", hora: "14h–15h" }, 
@@ -76,7 +76,6 @@ export function Agendas() {
     return trueConflicts.sort((a, b) => a.day - b.day);
   };
   
-  // Lista de ALERTA DE CONFLITOS REAIS 
   const conflictAlerts = findTrueConflicts(mockEventos);
 
   // -----------------------------
@@ -84,7 +83,6 @@ export function Agendas() {
   // -----------------------------
   const weeks = [];
   let dayCounter = 1;
-  // ... (lógica de weeks, firstWeekday, daysInMonth) ...
 
   for (let w = 0; w < 6; w++) {
     const week = [];
@@ -123,17 +121,17 @@ export function Agendas() {
   };
   
   const handleConflictClick = (conflictAlert) => {
-    setActiveConflictAlert(conflictAlert); // Abre o pop-up
-    scrollToDay(conflictAlert.day);      // Rola para o dia
+    setActiveConflictAlert(conflictAlert);
+    scrollToDay(conflictAlert.day);
   }
 
   return (
-    <div className="p-6">
+    <div className="p-8 pt-4">
       
       {/* -------------------------
           BARRA DE ALERTAS / CONFLITOS
       -------------------------- */}
-      <div className="bg-red-200 border border-red-300 text-red-800 p-4 rounded-xl mb-6">
+      <div className="bg-red-200 border border-red-300 text-red-800 p-4 rounded-xl mb-3">
         <p className="font-medium mb-3 flex items-center gap-2">
           <span>⚠</span> Conflitos Identificados ({conflictAlerts.length})
         </p>
