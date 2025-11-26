@@ -21,7 +21,7 @@ export default function CalendarioDeConflitos({
   const monthName = date.toLocaleString("pt-BR", { month: "long" });
 
   return (
-    <div className="p-1"> 
+    <div className="p-4"> 
     
       {/* Cabeçalho do mês e Navegação */}
       <div className="flex justify-between items-center mb-6">

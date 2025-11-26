@@ -1,184 +1,162 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DetalhesTransferenciaModal from '../components/transferencias/DetalhesTransferenciaModal';
 import { SearchBar } from '../components/SearchBar';
 import { FilterSelect } from '../components/FilterSelect';
+import { transferenciasService } from '../services/api';
 
-
-// --- Dados Mockados ---
-const mockTransferencias = [
-    { 
-        id: 1, 
-        paciente: "Pedro Alves", 
-        cpf: "123.123.123-11", 
-        hospitalDestino: "Hospital Central", 
-        status: "Aprovada", 
-        dataSolicitacao: "20/11/2025", 
-        dataAprovacao: "20/11/2025", 
-        justificativa: "Necessidade de cirurgia cardíaca especializada que só pode ser realizada no Hospital Central.",
-        observacoes: "Transporte agendado para as 16:00h."
-    },
-    { 
-        id: 2, 
-        paciente: "Joana Lima", 
-        cpf: "456.456.456-44", 
-        hospitalDestino: "Hospital Regional Sul", 
-        status: "Aguardando", 
-        dataSolicitacao: "24/11/2025", 
-        dataAprovacao: null, 
-        justificativa: "Requer leito de UTI de nível 3, indisponível nesta unidade.",
-        observacoes: ""
-    },
-    { 
-        id: 3, 
-        paciente: "Marcos Costa", 
-        cpf: "789.789.789-77", 
-        hospitalDestino: "Hospital Universitário", 
-        status: "Rejeitada", 
-        dataSolicitacao: "23/11/2025", 
-        dataAprovacao: "23/11/2025", 
-        justificativa: "O paciente não atende aos critérios de aceitação da unidade.",
-        observacoes: "Motivo da rejeição documentado na ficha."
-    },
-    { 
-        id: 4, 
-        paciente: "Luiza Santos", 
-        cpf: "101.101.101-00", 
-        hospitalDestino: "Hospital Central", 
-        status: "Aguardando", 
-        dataSolicitacao: "24/11/2025", 
-        dataAprovacao: null, 
-        justificativa: "Transferência solicitada pelo convênio médico.",
-        observacoes: "Aguardando confirmação de leito."
-    },
-];
-
-const statusOptions = ["Todos", "Aprovada", "Aguardando", "Rejeitada"];
-const hospitalOptions = ["Todos", "Hospital Central", "Hospital Regional Sul", "Hospital Universitário"];
 const periodoOptions = ["Todos", "Hoje", "Últimos 7 dias", "Últimos 30 dias"];
-// -------------------------------------------------------------------------
 
 
 export function Transferencias() {
+
+    const [transferencias, setTransferencias] = useState([]);
+    const [statusOptions, setStatusOptions] = useState(["Todos"]);
+    const [hospitalOptions, setHospitalOptions] = useState(["Todos"]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    // Filtros
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]);
-    const [selectedHospital, setSelectedHospital] = useState(hospitalOptions[0]);
+    const [selectedStatus, setSelectedStatus] = useState("Todos");
+    const [selectedHospital, setSelectedHospital] = useState("Todos");
     const [selectedPeriodo, setSelectedPeriodo] = useState(periodoOptions[0]);
-    const [selectedTransferencia, setSelectedTransferencia] = useState(null); // Estado para o modal de detalhes
+
+    const [selectedTransferencia, setSelectedTransferencia] = useState(null);
+
+    useEffect(() => {
+        let ativo = true;
+
+        async function carregar() {
+            setLoading(true);
+            setError('');
+
+            try {
+                const dados = await transferenciasService.getResumo();
+                if (!ativo) return;
+
+                setTransferencias(dados);
+
+                const hospSet = Array.from(new Set(dados.map(t => t.hospitalDestino))).filter(Boolean);
+                const statusSet = Array.from(new Set(dados.map(t => t.status))).filter(Boolean);
+
+                setHospitalOptions(["Todos", ...hospSet]);
+                setStatusOptions(["Todos", ...statusSet]);
+
+            } catch (err) {
+                console.error("Erro ao carregar transferências", err);
+                if (ativo) setError("Não foi possível carregar as transferências.");
+            } finally {
+                if (ativo) setLoading(false);
+            }
+        }
+
+        carregar();
+        return () => { ativo = false };
+    }, []);
 
     const handleSearchChange = (value) => setSearchTerm(value);
 
-    // Lógica para filtrar a lista de transferências
+    // ---- FILTROS ----
     const filteredTransferencias = useMemo(() => {
-        let list = mockTransferencias;
+        let list = transferencias;
 
-        // 1. Filtro de Busca (Paciente por nome/CPF)
+        // Busca por nome ou CPF
         if (searchTerm) {
-            const query = searchTerm.toLowerCase();
-            list = list.filter(t => 
-                t.paciente.toLowerCase().includes(query) || 
-                t.cpf.includes(query)
+            const q = searchTerm.toLowerCase();
+            list = list.filter(t =>
+                t.paciente.toLowerCase().includes(q) ||
+                t.cpf.includes(q)
             );
         }
 
-        // 2. Filtro de Status
-        if (selectedStatus !== 'Todos') {
+        // Status
+        if (selectedStatus !== "Todos") {
             list = list.filter(t => t.status === selectedStatus);
         }
-        
-        // 3. Filtro de Hospital Destino
-        if (selectedHospital !== 'Todos') {
-             list = list.filter(t => t.hospitalDestino === selectedHospital);
+
+        // Hospital
+        if (selectedHospital !== "Todos") {
+            list = list.filter(t => t.hospitalDestino === selectedHospital);
         }
-        
-        // (O filtro de Período deve ser implementado aqui)
 
         return list;
-    }, [searchTerm, selectedStatus, selectedHospital, selectedPeriodo]);
+    }, [transferencias, searchTerm, selectedStatus, selectedHospital, selectedPeriodo]);
 
-    const handleOpenTransferenciaDetails = (transferencia) => {
-        setSelectedTransferencia(transferencia);
-    };
+    const aguardandoCount = transferencias.filter(t => t.status === "Aguardando").length;
 
-    const handleCloseTransferenciaDetails = () => {
-        setSelectedTransferencia(null);
-    };
-    
-    // Cálculo de transferências aguardando (Simulação)
-    const aguardandoCount = mockTransferencias.filter(t => t.status === 'Aguardando').length;
-
-    // Função auxiliar para classes de status
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Aprovada': return 'text-green-600 font-semibold';
-            case 'Aguardando': return 'text-yellow-600 font-semibold';
-            case 'Rejeitada': return 'text-red-600 font-semibold';
-            default: return 'text-gray-600';
+            case "Aprovada": return "text-green-600 font-semibold";
+            case "Aguardando": return "text-yellow-600 font-semibold";
+            case "Rejeitada": return "text-red-600 font-semibold";
+            default: return "text-gray-600";
         }
     };
+
+    const handleOpenTransferenciaDetails = (t) => setSelectedTransferencia(t);
+    const handleCloseTransferenciaDetails = () => setSelectedTransferencia(null);
 
 
     return (
         <div className="p-8 pt-4 bg-gray-50 min-h-full">
-            
-            {/* BARRA DE FILTROS */}
+
+            {/* ===== FILTROS ===== */}
             <div className="bg-white p-6 pt-4 pb-4 rounded-xl shadow-sm border border-gray-200 mb-4">
 
-            <div className="flex flex-col lg:flex-row items-end justify-between gap-6">
-                
-                {/* Filtros */}
-                <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-                
-                <FilterSelect 
-                    label="Status"
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    options={statusOptions}
-                    className="w-full sm:w-48"
-                />
+                <div className="flex flex-col lg:flex-row items-end justify-between gap-6">
 
-                <FilterSelect 
-                    label="Hospital Destino"
-                    value={selectedHospital}
-                    onChange={(e) => setSelectedHospital(e.target.value)}
-                    options={hospitalOptions}
-                    className="w-full sm:w-48"
-                />
+                    {/* Dropdowns */}
+                    <div className="flex flex-wrap gap-4 w-full lg:w-auto">
 
-                <FilterSelect 
-                    label="Período"
-                    value={selectedPeriodo}
-                    onChange={(e) => setSelectedPeriodo(e.target.value)}
-                    options={periodoOptions}
-                    className="w-full sm:w-48"
-                />
+                        <FilterSelect
+                            label="Status"
+                            value={selectedStatus}
+                            onChange={(e) => setSelectedStatus(e.target.value)}
+                            options={statusOptions}
+                            className="w-full sm:w-48"
+                        />
 
+                        <FilterSelect
+                            label="Hospital Destino"
+                            value={selectedHospital}
+                            onChange={(e) => setSelectedHospital(e.target.value)}
+                            options={hospitalOptions}
+                            className="w-full sm:w-48"
+                        />
+
+                        <FilterSelect
+                            label="Período"
+                            value={selectedPeriodo}
+                            onChange={(e) => setSelectedPeriodo(e.target.value)}
+                            options={periodoOptions}
+                            className="w-full sm:w-48"
+                        />
+
+                    </div>
+
+                    {/* Badge aguardando */}
+                    <div className="px-4 py-2 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg font-semibold text-sm whitespace-nowrap">
+                        Aguardando Transferência: {aguardandoCount}
+                    </div>
                 </div>
 
-                {/* Badge de Contagem */}
-                <div className="px-4 py-2 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg font-semibold text-sm whitespace-nowrap">
-                Aguardando Transferência: {aguardandoCount}
+                {/* Campo de Busca */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                    <SearchBar
+                        placeholder="Buscar paciente por nome ou CPF..."
+                        onSearch={handleSearchChange}
+                        onSubmit={handleSearchChange}
+                        className="w-full"
+                        showFilter={false}
+                    />
                 </div>
-
             </div>
 
-            {/* BUSCA */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-                <SearchBar 
-                placeholder="Buscar paciente por nome ou CPF..." 
-                onSearch={handleSearchChange}
-                onSubmit={handleSearchChange}
-                className="w-full"
-                showFilter={false}
-                />
-            </div>
+            {/* ===== TABELA ===== */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 
-            </div>
-
-
-            {/* 3. TABELA DE TRANSFERÊNCIAS */}
-            <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-                
-                {/* Cabeçalho da Tabela */}
+                {/* Cabeçalho */}
                 <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr_2.5fr] p-4 text-sm font-semibold text-gray-700 border-b border-gray-200">
                     <div>Paciente</div>
                     <div>Hospital Destino</div>
@@ -187,7 +165,7 @@ export function Transferencias() {
                     <div>Justificativa</div>
                 </div>
 
-                {/* Corpo da Tabela */}
+                {/* Linhas */}
                 {filteredTransferencias.length > 0 ? (
                     filteredTransferencias.map(t => (
                         <button
@@ -204,16 +182,15 @@ export function Transferencias() {
                     ))
                 ) : (
                     <div className="p-8 text-center text-gray-500">
-                        Nenhuma solicitação de transferência encontrada com os filtros e busca aplicados.
+                        Nenhuma solicitação encontrada com os filtros aplicados.
                     </div>
                 )}
             </div>
 
-            {/* MODAL DE DETALHES DA TRANSFERÊNCIA */}
             {selectedTransferencia && (
-                <DetalhesTransferenciaModal 
-                    transferencia={selectedTransferencia} 
-                    onClose={handleCloseTransferenciaDetails} 
+                <DetalhesTransferenciaModal
+                    transferencia={selectedTransferencia}
+                    onClose={handleCloseTransferenciaDetails}
                 />
             )}
         </div>
