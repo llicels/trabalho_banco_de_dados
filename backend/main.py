@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from flask import Flask, jsonify
 from flask_cors import CORS
 from rotas.paciente import paciente_blueprint
@@ -29,6 +28,7 @@ app.register_blueprint(equipamento_blueprint)
 app.register_blueprint(transferencia_blueprint)
 
 app.run("0.0.0.0", port=8000, debug=False)
+
 
 
 =======
