@@ -7,10 +7,6 @@ export function FilterSelect({
   options = [], 
   className = "" 
 }) {
-  const normalizedOptions = options.map((option) =>
-    typeof option === 'string' ? { label: option, value: option } : option
-  );
-
   return (
     <div className={`relative ${className}`}>
     
@@ -24,9 +20,9 @@ export function FilterSelect({
           onChange={onChange}
           className="block w-full h-10 pl-3 pr-10 border border-Grey rounded-lg bg-white text-sm text-Black font-medium focus:ring-2 focus:ring-Blue1 focus:border-Blue1 outline-none appearance-none cursor-pointer"
         >
-          {normalizedOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+          {options.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
             </option>
           ))}
         </select>

@@ -1,15 +1,39 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CalendarioDeConflitos from "../components/agendas/CalendarioDeConflitos";
-import { agendaService } from "../services/api";
+
+// Função para formatar o número do dia para 'dd/mm'
+function formatDay(day, month) {
+  const monthStr = String(month + 1).padStart(2, "0");
+  const dayStr = String(day).padStart(2, "0");
+  return `${dayStr}/${monthStr}`;
+}
 
 export function Agendas() {
   // -----------------------------
-  const [conflictAlerts, setConflictAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // MOCK DE EVENTOS
+  // -----------------------------
+  const mockEventos = [
+    // Conflito REAL A: Mesmo dia (3), mesma sala (Sala 3), mesmo horário (10h–11h)
+    { id: 1, day: 3, sala: "Sala 3", desc: "Dr. Silva e Dr. Santos", hora: "10h–11h" },
+    { id: 5, day: 3, sala: "Sala 3", desc: "Reunião de Equipe", hora: "10h–11h" },
+    
+    // Conflito REAL B: Outro conflito para testar o agrupamento
+    { id: 6, day: 15, sala: "Sala 1", desc: "Consulta Dra. Ana", hora: "09h–10h" },
+    { id: 7, day: 15, sala: "Sala 1", desc: "Exame de Rotina", hora: "09h–10h" },
+    
+    // NÃO é Conflito (Sala diferente)
+    { id: 2, day: 3, sala: "Sala 1", desc: "Dra. Maria e Dra. Ana", hora: "14h–15h" }, 
+    
+    // Evento único
+    { id: 4, day: 20, sala: "Sala 2", desc: "Reunião de Projetos", hora: "16h–17h" },
+  ];
 
+  // -----------------------------
+  // ESTADO DO CALENDÁRIO & POPUP
+  // -----------------------------
   const [currentMonth, setCurrentMonth] = useState(10); 
   const [currentYear, setCurrentYear] = useState(2025);
+  // Armazena o grupo de eventos conflitantes (o objeto completo do alerta)
   const [activeConflictAlert, setActiveConflictAlert] = useState(null); 
 
   const date = new Date(currentYear, currentMonth, 1);
@@ -17,28 +41,42 @@ export function Agendas() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
 
-  useEffect(() => {
-    let ativo = true;
-    async function carregar() {
-      setLoading(true);
-      setError('');
-      try {
-        const { conflicts } = await agendaService.getEventosDoMes(currentYear, currentMonth);
-        if (!ativo) return;
-        setConflictAlerts(conflicts);
-      } catch (err) {
-        console.error('Erro ao carregar agenda', err);
-        if (ativo) setError('Não foi possível carregar os agendamentos.');
-      } finally {
-        if (ativo) setLoading(false);
-      }
-    }
+  // -----------------------------
+  // FUNÇÃO DE IDENTIFICAÇÃO DE CONFLITOS REAIS
+  // -----------------------------
+  const findTrueConflicts = (events) => {
+    const eventMap = new Map();
+    const trueConflicts = [];
 
-    carregar();
-    return () => {
-      ativo = false;
-    };
-  }, [currentMonth, currentYear]);
+    // 1. Agrupar eventos por CHAVE ÚNICA (dia-sala-hora)
+    events.forEach(event => {
+      const key = `${event.day}-${event.sala}-${event.hora}`;
+      if (!eventMap.has(key)) {
+        eventMap.set(key, []);
+      }
+      eventMap.get(key).push(event);
+    });
+
+    // 2. Criar alertas de conflito a partir dos grupos com mais de 1 evento
+    eventMap.forEach((eventList, key) => {
+      if (eventList.length > 1) {
+        const firstEvent = eventList[0];
+        trueConflicts.push({
+          key: key,
+          day: firstEvent.day,
+          sala: firstEvent.sala,
+          hora: firstEvent.hora,
+          date: formatDay(firstEvent.day, currentMonth),
+          events: eventList,
+          count: eventList.length,
+        });
+      }
+    });
+                                
+    return trueConflicts.sort((a, b) => a.day - b.day);
+  };
+  
+  const conflictAlerts = findTrueConflicts(mockEventos);
 
   // -----------------------------
   // GERA MATRIZ DO CALENDÁRIO
@@ -83,27 +121,17 @@ export function Agendas() {
   };
   
   const handleConflictClick = (conflictAlert) => {
-    setActiveConflictAlert(conflictAlert); // Abre o pop-up
-    scrollToDay(conflictAlert.day);      // Rola para o dia
+    setActiveConflictAlert(conflictAlert);
+    scrollToDay(conflictAlert.day);
   }
 
   return (
-    <div className="p-6">
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg text-gray-500 shadow-sm">
-          Carregando agenda...
-        </div>
-      )}
+    <div className="p-8 pt-4">
       
       {/* -------------------------
           BARRA DE ALERTAS / CONFLITOS
       -------------------------- */}
-      <div className="bg-red-200 border border-red-300 text-red-800 p-4 rounded-xl mb-6">
+      <div className="bg-red-200 border border-red-300 text-red-800 p-4 rounded-xl mb-3">
         <p className="font-medium mb-3 flex items-center gap-2">
           <span>⚠</span> Conflitos Identificados ({conflictAlerts.length})
         </p>
@@ -137,7 +165,7 @@ export function Agendas() {
         weeks={weeks}
         currentMonth={currentMonth}
         currentYear={currentYear}
-        conflictAlerts={conflictAlerts}
+        conflictAlerts={conflictAlerts} // Passando os alertas agrupados
         nextMonth={nextMonth}
         prevMonth={prevMonth}
         date={date}

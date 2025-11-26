@@ -20,7 +20,7 @@ export default function DetalhesTransferenciaModal({ transferencia, onClose }) {
                     <span className="text-sm font-normal">Status: {transferencia.status}</span>
                 </div>
                 
-                <div className ="p-6 space-y-4">
+                <div className className="p-6 space-y-4">
                     
                     {/* 1. Informações Gerais */}
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

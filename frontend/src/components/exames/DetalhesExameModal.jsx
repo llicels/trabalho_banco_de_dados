@@ -1,5 +1,3 @@
-// Arquivo: src/components/Exames/DetalhesExameModal.jsx
-
 export default function DetalhesExameModal({ exame, onClose }) {
     if (!exame) return null;
 
