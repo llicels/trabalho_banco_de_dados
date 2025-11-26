@@ -102,7 +102,7 @@ INSERT INTO Medicamento (Nome) VALUES
 ('Diazepam'), ('Buscopan'), ('Plasil'), ('Ondansetrona'), ('Ceftriaxona'),
 ('Amoxicilina'), ('Azitromicina'), ('Insulina'), ('Adrenalina'), ('Atropina'),
 ('Furosemida'), ('Hidrocortisona'), ('Prednisona'), ('Omeprazol'), ('Pantoprazol'),
-('Losartana'), ('Enalapril'), ('Atenolol'), ('Metformina'), ('Simeticona'), (‘Dramin’), (‘AAS’), (‘Colírio’);
+('Losartana'), ('Enalapril'), ('Atenolol'), ('Metformina'), ('Simeticona'), ('Dramin'), ('AAS'), ('Colírio');
 
 -- Tabela Consultório
 INSERT INTO Consultório (Tipo) VALUES
