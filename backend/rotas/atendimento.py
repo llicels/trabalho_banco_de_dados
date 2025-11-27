@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from servicos.atendimento import AtendimentoDatabase
 
 atendimento_blueprint = Blueprint("atendimento", __name__)
+
 
 @atendimento_blueprint.route("/atendimentos", methods=["GET"])
 def get_atendimentos():
@@ -173,6 +175,22 @@ def exames_de_paciente():
     if not cpf:
         return jsonify("Parâmetro 'cpf' é obrigatório"), 400
     return jsonify(AtendimentoDatabase().exames_de_paciente(cpf)), 200
+
+
+@atendimento_blueprint.route("/atendimentos/exames/resumo", methods=["GET"])
+def exames_resumo():
+    data_inicio = request.args.get("data_inicio", "")
+    data_fim = request.args.get("data_fim", "")
+
+    try:
+        fim = datetime.fromisoformat(data_fim) if data_fim else datetime.now()
+        inicio = datetime.fromisoformat(data_inicio) if data_inicio else fim - timedelta(days=30)
+    except ValueError:
+        return jsonify("Formato de data inválido. Use YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS"), 400
+
+    inicio_str = inicio.strftime("%Y-%m-%d %H:%M:%S")
+    fim_str = fim.strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify(AtendimentoDatabase().get_exames_resumo(inicio_str, fim_str)), 200
 
 
 @atendimento_blueprint.route("/atendimentos/resultados", methods=["GET"])

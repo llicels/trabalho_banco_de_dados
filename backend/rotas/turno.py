@@ -134,4 +134,3 @@ def get_escala_intervalo():
 @turno_blueprint.route("/turnos/<int:id_turno>/colaboradores", methods=["GET"])
 def get_colaboradores_turno(id_turno):
     return jsonify(TurnoDatabase().get_colaboradores_por_turno(id_turno)), 200
-

@@ -63,4 +63,3 @@ class LeitoDatabase:
             );
         """
         return self.db.execute_select_all(query)
-

@@ -218,4 +218,3 @@ class TurnoDatabase:
         WHERE vt.ID_Turno = {id_turno};
         """
         return self.db.execute_select_all(query)
-

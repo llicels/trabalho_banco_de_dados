@@ -112,4 +112,3 @@ def salas_raio_x_desocupadas():
     if not timestamp:
         return jsonify("Parâmetro 'timestamp' é obrigatório"), 400
     return jsonify(SalaDatabase().salas_raio_x_desocupadas_em(timestamp)), 200
-

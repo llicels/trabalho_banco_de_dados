@@ -3,6 +3,7 @@ from servicos.paciente import PacienteDatabase
 
 paciente_blueprint = Blueprint("paciente", __name__)
 
+
 @paciente_blueprint.route("/pacientes", methods=["GET"])
 def get_pacientes():
     cpf = request.args.get("cpf", "")
@@ -61,4 +62,3 @@ def post_alergia_paciente(cpf):
         return jsonify("Não foi possível adicionar a alergia"), 400
     
     return jsonify("Alergia adicionada com sucesso"), 200
-

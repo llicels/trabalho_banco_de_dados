@@ -235,4 +235,27 @@ class AtendimentoDatabase:
         """
         return self.db.execute_select_all(query)
     
+    def get_exames_resumo(self, data_inicio: str, data_fim: str):
+        query = f"""
+        SELECT
+            am.ID_Amostra AS id_amostra,
+            am.Tipo AS tipo_coleta,
+            am.Exame AS exame,
+            am.Previsão_Liberação AS previsao_liberacao,
+            a.ID_Atendimento AS id_atendimento,
+            a.Data_Hora_Entrada AS data_solicitacao,
+            a.Data_Hora_Saída AS data_resultado,
+            p.Nome AS nome_paciente,
+            p.CPF AS cpf_paciente,
+            COALESCE(m.Nome, d.Nome, pe.Nome, 'Profissional UPA') AS solicitante
+        FROM Amostra_Coletada AS am
+        JOIN Atendimento AS a ON am.ID_Atendimento = a.ID_Atendimento
+        JOIN Paciente AS p ON a.CPF_Paciente = p.CPF
+        LEFT JOIN Médico AS m ON a.CPF_Médico = m.CPF
+        LEFT JOIN Dentista AS d ON a.CPF_Dentista = d.CPF
+        LEFT JOIN Profissional_de_Enfermagem AS pe ON a.CPF_Profissional_de_Enfermagem = pe.CPF
+        WHERE a.Data_Hora_Entrada BETWEEN '{data_inicio}' AND '{data_fim}'
+        ORDER BY am.Previsão_Liberação DESC;
+        """
+        return self.db.execute_select_all(query)
     
