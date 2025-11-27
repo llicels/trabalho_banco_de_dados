@@ -66,23 +66,82 @@ export function Turnos() {
 
   useEffect(() => {
     let ativo = true;
+
     async function carregar() {
-      if (!selectedDate) return;
+      // O loading visualiza que está "buscando" os dados
       setLoading(true);
       setError('');
-      try {
-        const dados = await turnosService.getEscalaPorData(selectedDate);
-        if (!ativo) return;
-        setEscala(Array.isArray(dados) ? dados : []);
-      } catch (err) {
-        console.error('Erro ao carregar escala', err);
-        if (ativo) {
-          setEscala([]);
-          setError('Não foi possível carregar a escala para a data selecionada.');
+
+      // --- MOCK DATA: 13 COLABORADORES ---
+      // Data fixa em 2024-01-01 para bater com seu selectedDate
+      const dadosMock = [
+        // --- SETOR: EMERGÊNCIA (Médicos) [4 Pessoas] ---
+        {
+          id: '1', nome_colaborador: 'Dr. João Silva', funcao: 'Médico Plantonista',
+          hora_chegada: '2024-01-01T07:00:00', hora_saida: '2024-01-01T19:00:00'
+        },
+        {
+          id: '2', nome_colaborador: 'Dra. Maria Costa', funcao: 'Médico Rotina',
+          hora_chegada: '2024-01-01T08:00:00', hora_saida: '2024-01-01T17:00:00'
+        },
+        {
+          id: '3', nome_colaborador: 'Dr. Pedro Santos', funcao: 'Médico Noturno',
+          hora_chegada: '2024-01-01T19:00:00', hora_saida: '2024-01-01T23:59:59'
+        },
+        {
+          id: '4', nome_colaborador: 'Dra. Ana Luiza', funcao: 'Médico Cirurgião',
+          hora_chegada: '2024-01-01T10:00:00', hora_saida: '2024-01-01T16:00:00'
+        },
+
+        // --- SETOR: TRIAGEM (Assistente Social) [2 Pessoas] ---
+        {
+          id: '5', nome_colaborador: 'Sarah Social', funcao: 'Assistente Social',
+          hora_chegada: '2024-01-01T08:00:00', hora_saida: '2024-01-01T14:00:00'
+        },
+        {
+          id: '6', nome_colaborador: 'Roberto Apoio', funcao: 'Assistente Social',
+          hora_chegada: '2024-01-01T14:00:00', hora_saida: '2024-01-01T20:00:00'
+        },
+
+        // --- SETOR: OBSERVAÇÃO (Enfermagem) [3 Pessoas] ---
+        {
+          id: '7', nome_colaborador: 'Enf. Beatriz', funcao: 'Enfermagem Chefe',
+          hora_chegada: '2024-01-01T07:00:00', hora_saida: '2024-01-01T19:00:00'
+        },
+        {
+          id: '8', nome_colaborador: 'Enf. Carlos', funcao: 'Enfermeiro',
+          hora_chegada: '2024-01-01T19:00:00', hora_saida: '2024-01-01T23:59:59'
+        },
+        {
+          id: '9', nome_colaborador: 'Enf. Julia', funcao: 'Técnico de Enfermagem', // Vai cair aqui pela palavra 'Enfermagem'
+          hora_chegada: '2024-01-01T07:00:00', hora_saida: '2024-01-01T13:00:00'
+        },
+
+        // --- SETOR: MEDICAÇÃO (Técnicos/Apoio) [4 Pessoas] ---
+        {
+          id: '10', nome_colaborador: 'Téc. Lucas', funcao: 'Técnico Geral',
+          hora_chegada: '2024-01-01T08:00:00', hora_saida: '2024-01-01T18:00:00'
+        },
+        {
+          id: '11', nome_colaborador: 'Téc. Amanda', funcao: 'Técnico de Apoio',
+          hora_chegada: '2024-01-01T12:00:00', hora_saida: '2024-01-01T22:00:00'
+        },
+        {
+          id: '12', nome_colaborador: 'Ricardo Souza', funcao: 'Colaborador Limpeza',
+          hora_chegada: '2024-01-01T06:00:00', hora_saida: '2024-01-01T14:00:00'
+        },
+        {
+          id: '13', nome_colaborador: 'Sonia Dias', funcao: 'Apoio Logístico',
+          hora_chegada: '2024-01-01T14:00:00', hora_saida: '2024-01-01T22:00:00'
         }
-      } finally {
-        if (ativo) setLoading(false);
-      }
+      ];
+
+      setTimeout(() => {
+        if (ativo) {
+          setEscala(dadosMock);
+          setLoading(false);
+        }
+      }, 500);
     }
 
     carregar();
