@@ -1,47 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MapaAlaModal from '../components/leitos/MapaAlaModal';
 import DetalhesOcupacaoModal from '../components/leitos/DetalhesOcupacaoModal';
 import AtribuirPacienteModal from '../components/leitos/AtribuirPacienteModal';
 import MudarStatusModal from '../components/leitos/MudarStatusModal';
-import { FilterSelect } from '../components/FilterSelect';
+import { SearchBar } from '../components/SearchBar'; 
+import { leitosService } from '../services/api';
 
 
-
-// --- Dados Mockados (completos) ---
-const mockLeitosData = [
-    { nome: 'E-01', status: 'Ocupado', risco: 'Alto', dataOcupacao: '01/11/2025 10:00', ocupante: { nome: 'João Silva', prontuarioId: 1001 } },
-    { nome: 'E-02', status: 'Ocupado', risco: 'Médio', dataOcupacao: '05/11/2025 12:30', ocupante: { nome: 'Ana Lima', prontuarioId: 1002 } },
-    { nome: 'E-03', status: 'Livre', risco: 'N/A', dataOcupacao: null, ocupante: null },
-    { nome: 'E-04', status: 'Ocupado', risco: 'Alto', dataOcupacao: '20/11/2025 15:00', ocupante: { nome: 'Carlos Dias', prontuarioId: 1003 } },
-    { nome: 'E-05', status: 'Livre', risco: 'N/A', dataOcupacao: null, ocupante: null },
-    { nome: 'E-06', status: 'Ocupado', risco: 'Baixo', dataOcupacao: '22/11/2025 08:00', ocupante: { nome: 'Maria Clara', prontuarioId: 1004 } },
-    { nome: 'E-07', status: 'Ocupado', risco: 'Médio', dataOcupacao: '23/11/2025 18:00', ocupante: { nome: 'Pedro Souza', prontuarioId: 1005 } },
-    { nome: 'E-08', status: 'Manutencao', risco: 'N/A', dataOcupacao: null, ocupante: null },
-];
-
-const mockAlas = [
-    { nome: 'Emergência A', tipo: 'UTI', leitos: mockLeitosData, ocupados: 5, livres: 2, manutencao: 1, total: 8, risco: 'Alto' },
-    { nome: 'Internação Geral', tipo: 'Quarto', leitos: mockLeitosData.slice(0, 4), ocupados: 3, livres: 1, manutencao: 0, total: 4, risco: 'Baixo' },
-    { nome: 'Observação B', tipo: 'Observação', leitos: mockLeitosData.slice(4), ocupados: 3, livres: 1, manutencao: 0, total: 4, risco: 'Médio' },
-];
-
-const mockSalasExames = [
-    { nome: 'Sala Raio-X 1', tipo: 'Radiologia', status: 'Ocupado', uso: 'Urgência', liberacao: '14:00' },
-    { nome: 'Sala Tomografia', tipo: 'Imagem', status: 'Livre', uso: 'N/A', liberacao: '-' },
-    { nome: 'Laboratório Coleta', tipo: 'Laboratório', status: 'Em Uso', uso: 'Coleta', liberacao: '16:00' },
-];
-
-const mockHistoricoOcupacao = [
-    { passagemId: 501, leitoNome: 'E-01', paciente: 'Joana', dataOcupacao: '01/10/2025 10:00', dataLiberacao: '03/10/2025 18:00', duracao: '2 dias e 8h' },
-    { passagemId: 502, leitoNome: 'E-03', paciente: 'Ricardo', dataOcupacao: '04/10/2025 09:00', dataLiberacao: '04/10/2025 19:00', duracao: '10h' },
-];
-
-// Contadores totais
-const totalLeitos = mockAlas.reduce((acc, ala) => acc + ala.total, 0);
-const leitosDisponiveis = mockAlas.reduce((acc, ala) => acc + ala.livres, 0);
+const tipoOptions = ['Todos', 'Emergência', 'Comum'];
+const riscoOptions = ['Todos', 'Alto', 'Médio', 'Baixo'];
+const statusOptions = ['Todos', 'Livre', 'Ocupado'];
 
 
 export function Leitos() {
+    const [alas, setAlas] = useState([]);
+    const [salasExames, setSalasExames] = useState([]);
+    const [historicoOcupacao, setHistoricoOcupacao] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
     const [selectedAla, setSelectedAla] = useState(null); 
     const [selectedDetalhe, setSelectedDetalhe] = useState(null); 
     const [selectedAtribuicao, setSelectedAtribuicao] = useState(null); 
@@ -52,6 +29,40 @@ export function Leitos() {
     const [tipoFiltro, setTipoFiltro] = useState('Todos');
     const [riscoFiltro, setRiscoFiltro] = useState('Todos');
     const [statusFiltro, setStatusFiltro] = useState('Todos');
+
+    useEffect(() => {
+        let ativo = true;
+        async function carregarDados() {
+            setLoading(true);
+            setError('');
+            try {
+                const dados = await leitosService.getResumo();
+                if (!ativo) return;
+                setAlas(dados.alas || []);
+                setSalasExames(dados.salas || []);
+                setHistoricoOcupacao(dados.historico || []);
+            } catch (err) {
+                console.error('Erro ao carregar leitos', err);
+                if (ativo) setError('Não foi possível carregar os dados de leitos.');
+            } finally {
+                if (ativo) setLoading(false);
+            }
+        }
+
+        carregarDados();
+        return () => {
+            ativo = false;
+        };
+    }, []);
+
+    const totalLeitos = useMemo(
+        () => alas.reduce((acc, ala) => acc + ala.total, 0),
+        [alas]
+    );
+    const leitosDisponiveis = useMemo(
+        () => alas.reduce((acc, ala) => acc + ala.livres, 0),
+        [alas]
+    );
 
 
     // --- Funções de Abertura/Fechamento dos Modais ---
@@ -81,14 +92,14 @@ export function Leitos() {
     const handleCloseAtribuicao = () => setSelectedAtribuicao(null);
     const handleCloseStatusChange = () => setSelectedStatusChange(null);
 
-    const filteredAlas = mockAlas.filter(ala => {
-        const tipoMatch = tipoFiltro === 'Todos' || ala.tipo === tipoFiltro;
-        const riscoMatch = riscoFiltro === 'Todos' || ala.risco === riscoFiltro;
-        
-        const statusMatch = statusFiltro === 'Todos' || ala.leitos.some(l => l.status === statusFiltro);
-
-        return tipoMatch && riscoMatch && statusMatch;
-    });
+    const filteredAlas = useMemo(() => {
+        return alas.filter(ala => {
+            const tipoMatch = tipoFiltro === 'Todos' || ala.tipo === tipoFiltro;
+            const riscoMatch = riscoFiltro === 'Todos' || ala.risco === riscoFiltro;
+            const statusMatch = statusFiltro === 'Todos' || ala.leitos?.some(l => l.status === statusFiltro);
+            return tipoMatch && riscoMatch && statusMatch;
+        });
+    }, [alas, tipoFiltro, riscoFiltro, statusFiltro]);
 
     // Função auxiliar para cores de status/risco
     const getColorClass = (statusOrRisco) => {
@@ -109,58 +120,78 @@ export function Leitos() {
 
 
     return (
-        <div className="p-8 pt-4 bg-gray-50 min-h-full">
-  
-            {/* Contadores */}
-            <div className="flex gap-6 mb-4">
-                <div className="text-lg font-semibold">Salas Disponíveis: <span className="text-blue-600">{mockAlas.length}/5</span></div>
-                <div className="text-lg font-semibold">Leitos Disponíveis: <span className="text-green-600">{leitosDisponiveis}/{totalLeitos}</span></div>
-            </div>
-
-            {/* 2. FILTROS E BUSCA (Simulação) */}
-            <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">
-                
-                <div className="flex items-start justify-start gap-4 mb-4">
-
-                    <FilterSelect
-                        label="Tipo de Sala"
-                        value={tipoFiltro}
-                        onChange={(e) => setTipoFiltro(e.target.value)}
-                        options={["Todos", "UTI", "Quarto", "Observação"]}
-                        className="w-48"
-                    />
-
-                    <FilterSelect
-                        label="Classificação de Risco"
-                        value={riscoFiltro}
-                        onChange={(e) => setRiscoFiltro(e.target.value)}
-                        options={["Todos", "Alto", "Médio", "Baixo"]}
-                        className="w-48"
-                    />
-
-                    <FilterSelect
-                        label="Status"
-                        value={statusFiltro}
-                        onChange={(e) => setStatusFiltro(e.target.value)}
-                        options={["Todos", "Livre", "Ocupado", "Manutencao"]}
-                        className="w-48"
-                    />
-
+        <div className="p-6 bg-gray-50 min-h-screen">
+            {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                    {error}
                 </div>
+            )}
 
+            {loading ? (
+                <div className="p-10 bg-white rounded-xl shadow-xl border border-gray-200 text-center text-gray-500">
+                    Carregando dados em tempo real...
+                </div>
+            ) : (
+                <>
+                    {/* Contadores */}
+                    <div className="flex gap-6 mb-6">
+                        <div className="text-lg font-semibold">Alas Monitoradas: <span className="text-blue-600">{alas.length}</span></div>
+                        <div className="text-lg font-semibold">Leitos Disponíveis: <span className="text-green-600">{leitosDisponiveis}/{totalLeitos}</span></div>
+                    </div>
+
+                    {/* 2. FILTROS */}
+                    <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">
+                        <div className="flex items-start justify-start gap-4 mb-4">
+                    
+                            {/* Tipo de Sala/Ala */}
+                            <div className="w-48 relative pt-4">
+                                <label htmlFor="filter-tipo" className="text-xs font-medium text-gray-500 absolute top-0 left-0">Tipo de Sala</label>
+                                <select value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}
+                                    className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700">
+                                    {tipoOptions.map((tipo) => (
+                                        <option key={tipo} value={tipo}>{tipo}</option>
+                                    ))}
+                                </select>
+                                <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                            </div>
+
+                    {/* Classificação de Risco */}
+                    <div className="w-48 relative pt-4">
+                        <label htmlFor="filter-risco" className="text-xs font-medium text-gray-500 absolute top-0 left-0">Classificação de Risco</label>
+                        <select value={riscoFiltro} onChange={(e) => setRiscoFiltro(e.target.value)}
+                            className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700">
+                            {riscoOptions.map((risco) => (
+                                <option key={risco} value={risco}>{risco}</option>
+                            ))}
+                        </select>
+                        <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    </div>
+
+                    {/* Status */}
+                    <div className="w-48 relative pt-4">
+                         <label htmlFor="filter-status-leito" className="text-xs font-medium text-gray-500 absolute top-0 left-0">Status</label>
+                        <select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)}
+                            className="block w-full p-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8 text-sm cursor-pointer font-medium text-gray-700">
+                            {statusOptions.map((status) => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
+                        </select>
+                        <svg className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    </div>
+                </div>
             </div>
 
             {/* 3. ABAS DE NAVEGAÇÃO */}
             <div className="flex border-b border-gray-300 mb-6">
                 <button
                     onClick={() => setActiveTab('Leitos')}
-                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Leitos' ? 'border-b-4 border-Blue1 text-Blue1 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
+                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Leitos' ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                     Mapa de Leitos e Salas
                 </button>
                 <button
                     onClick={() => setActiveTab('Historico')}
-                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Historico' ? 'border-b-4 border-Blue1 text-Blue1 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
+                    className={`py-2 px-6 text-sm font-semibold transition -mb-[1px] ${activeTab === 'Historico' ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                     Histórico de Ocupação
                 </button>
@@ -202,15 +233,15 @@ export function Leitos() {
                         <div>
                             <h3 className="text-lg font-semibold mb-4 border-t pt-4 mt-6">Status das Salas de Exames</h3>
                             <div className="grid grid-cols-5 gap-4">
-                                {mockSalasExames.map(sala => (
+                                {salasExames.map(sala => (
                                     <div 
-                                        key={sala.nome}
+                                        key={sala.id || sala.nome}
                                         className={`p-4 border-2 rounded-lg shadow-md ${getColorClass(sala.status)} text-left h-36`}
                                     >
                                         <p className="font-bold text-lg mb-1">{sala.nome}</p>
                                         <p className="text-sm">Tipo: {sala.tipo}</p>
                                         <p className="text-sm">Status: <span className="font-semibold">{sala.status}</span></p>
-                                        {sala.status !== 'Livre' && (
+                                        {sala.liberacao && sala.liberacao !== '-' && (
                                             <p className="text-sm">Liberação: {sala.liberacao}</p>
                                         )}
                                     </div>
@@ -235,7 +266,7 @@ export function Leitos() {
                                 <div>Duração</div>
                             </div>
 
-                            {mockHistoricoOcupacao.map(item => (
+                            {historicoOcupacao.map(item => (
                                 <button
                                     key={item.passagemId}
                                     onClick={() => handleOpenDetalhe(item)} 
@@ -253,39 +284,36 @@ export function Leitos() {
                 )}
             </div>
 
-            {/* MODAIS */}
-            
-            {/* MODAL 1: MAPA DA ALA */}
-            {selectedAla && (
-                <MapaAlaModal 
-                    ala={selectedAla} 
-                    onClose={handleCloseAlaMap} 
-                    onLeitoAction={handleLeitoAction} 
-                />
-            )}
-            
-            {/* MODAL 2: DETALHES DE LEITO OCUPADO / HISTÓRICO */}
-            {selectedDetalhe && (
-                <DetalhesOcupacaoModal 
-                    leito={selectedDetalhe} 
-                    onClose={handleCloseDetalhe} 
-                />
-            )}
-            
-            {/* MODAL 3: ATRIBUIR PACIENTE (Leito Livre) */}
-            {selectedAtribuicao && (
-                <AtribuirPacienteModal
-                    leito={selectedAtribuicao}
-                    onClose={handleCloseAtribuicao}
-                />
-            )}
+                    {/* MODAIS */}
+                    {selectedAla && (
+                        <MapaAlaModal 
+                            ala={selectedAla} 
+                            onClose={handleCloseAlaMap} 
+                            onLeitoAction={handleLeitoAction} 
+                        />
+                    )}
+                    
+                    {selectedDetalhe && (
+                        <DetalhesOcupacaoModal 
+                            leito={selectedDetalhe} 
+                            onClose={handleCloseDetalhe} 
+                        />
+                    )}
+                    
+                    {selectedAtribuicao && (
+                        <AtribuirPacienteModal
+                            leito={selectedAtribuicao}
+                            onClose={handleCloseAtribuicao}
+                        />
+                    )}
 
-             {/* MODAL 4: MUDAR STATUS (Leito Manutenção) */}
-            {selectedStatusChange && (
-                <MudarStatusModal
-                    leito={selectedStatusChange}
-                    onClose={handleCloseStatusChange}
-                />
+                    {selectedStatusChange && (
+                        <MudarStatusModal
+                            leito={selectedStatusChange}
+                            onClose={handleCloseStatusChange}
+                        />
+                    )}
+                </>
             )}
         </div>
     );

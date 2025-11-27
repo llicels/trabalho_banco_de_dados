@@ -1,250 +1,258 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
 import DetalhesAtendimentoModal from '../components/prontuarios/DetalhesAtendimentoModal';
-import { SearchBar } from '../components/SearchBar';
-import { dashboardService } from '../services/api';
+import { SearchBar } from '../components/SearchBar'; 
+import { prontuarioService } from '../services/api';
+
 
 export function Prontuarios() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const buscaInicial = searchParams.get('busca') || '';
-
-    const [searchTerm, setSearchTerm] = useState(buscaInicial);
-    const [patientFound, setPatientFound] = useState(false);
+    const [prontuario, setProntuario] = useState(null);
     const [loading, setLoading] = useState(false);
-
-    const [pacienteData, setPacienteData] = useState(null);
+    const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [patientFound, setPatientFound] = useState(false);
     const [activeTab, setActiveTab] = useState('Historico');
     const [selectedAtendimento, setSelectedAtendimento] = useState(null);
 
     const tabOptions = [
-        { key: 'Historico', label: 'Histórico Clínico' },
-        { key: 'Transferencias', label: 'Transferências' },
-        { key: 'Exames', label: 'Histórico de Exames' },
+        { key: 'Historico', label: 'Histórico de Atendimentos' },
+        { key: 'Diagnosticos', label: 'Diagnósticos' },
+        { key: 'Prescricoes', label: 'Prescrições' },
+        { key: 'Exames', label: 'Exames Realizados' },
     ];
 
-    useEffect(() => {
-        if (buscaInicial) {
-            handleSearchSubmit(buscaInicial);
-        }
-    }, [buscaInicial]);
-
-    // ------------------------------
-    // 1. BUSCAR PACIENTE NO BACKEND
-    // ------------------------------
+    // Lógica de busca final: acionada ao clicar ou pressionar Enter
     const handleSearchSubmit = async (value) => {
-        if (!value) return;
-        setLoading(true);
-        try {
-            // 1. Busca Paciente
-            const dadosCompletos = await dashboardService.getPacienteCompleto(value);
-
-            if (!dadosCompletos) {
-                setPatientFound(false);
-                setPacienteData(null);
-                return;
-            }
-
-            setPacienteData(dadosCompletos);
-            setPatientFound(true);
-            setActiveTab("Historico");
-
-        } catch (err) {
-            console.error("Erro ao buscar:", err);
+        const query = value.trim();
+        setSearchTerm(query);
+        if (!query) {
+            setProntuario(null);
             setPatientFound(false);
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        try {
+            const resultado = await prontuarioService.buscarProntuario(query);
+            if (resultado) {
+                setProntuario(resultado);
+                setPatientFound(true);
+                setActiveTab('Historico');
+                setSelectedAtendimento(null);
+            } else {
+                setProntuario(null);
+                setPatientFound(false);
+                setError(`Paciente com "${query}" não encontrado.`);
+            }
+        } catch (err) {
+            console.error('Erro ao buscar prontuário', err);
+            setProntuario(null);
+            setPatientFound(false);
+            setError('Não foi possível buscar o prontuário.');
         } finally {
             setLoading(false);
         }
     };
-
-    const renderTabContent = () => {
-        if (!pacienteData) return null;
-
-        // 1. ABA HISTÓRICO (Com Sinais Vitais)
-        if (activeTab === "Historico") {
-            const lista = pacienteData.historico_atendimentos || [];
-            if (lista.length === 0) return <div className="p-8 text-center text-Grey italic">Nenhum atendimento registrado.</div>;
-
-            return (
-                <div className="space-y-3">
-                    {lista.map((item, i) => (
-                        <div key={i} className="bg-white p-4 rounded-xl border border-LightGrey shadow-sm hover:border-Blue1/50 transition-all group">
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <span className="font-bold text-Blue3 text-lg block">
-                                        {item.tipo}
-                                    </span>
-                                    <span className="text-xs text-Grey uppercase tracking-wide font-bold">
-                                        {item.medico}
-                                    </span>
-                                </div>
-                                <div className="text-right">
-                                    <span className="block font-bold text-Black">{item.data_atendimento}</span>
-                                    <span className="text-xs text-Grey">{item.hora}</span>
-                                </div>
-                            </div>
-                            
-                            {/* Sinais Vitais (Se existirem) */}
-                            {item.sinais && (item.sinais.temp || item.sinais.pressao) && (
-                                <div className="flex gap-4 mb-3 mt-2">
-                                    {item.sinais.temp && (
-                                        <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-100">
-                                            Temp: {item.sinais.temp}°C
-                                        </span>
-                                    )}
-                                    {item.sinais.pressao && (
-                                        <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100">
-                                            PA: {item.sinais.pressao}
-                                        </span>
-                                    )}
-                                    {item.sinais.freq && (
-                                        <span className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded border border-red-100">
-                                            FC: {item.sinais.freq} bpm
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="text-sm text-DarkGrey bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                <span className="font-bold text-Black">Observações: </span>
-                                {item.queixa || "Sem observações."}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-
-        // 2. ABA TRANSFERÊNCIAS (Nova!)
-        if (activeTab === "Transferencias") {
-            const lista = pacienteData.historico_transferencias || [];
-            if (lista.length === 0) return <div className="p-8 text-center text-Grey italic">Nenhuma transferência registrada.</div>;
-
-            return (
-                <div className="space-y-3">
-                    {lista.map((item, i) => (
-                        <div key={i} className="bg-white p-4 rounded-xl border border-LightGrey shadow-sm flex justify-between items-center">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-bold text-Black">Destino: Hospital ID {item.id_hospital}</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                                        item.status_transferencia === 'Concluída' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                    }`}>
-                                        {item.status_transferencia}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-DarkGrey">Motivo: {item.justificativa}</p>
-                                <p className="text-xs text-Grey mt-1">Transporte: {item.transporte}</p>
-                            </div>
-                            <div className="text-right text-sm font-bold text-Blue3">
-                                {new Date(item.data_transferencia).toLocaleDateString('pt-BR')}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-
-        // 3. ABA EXAMES
-        if (activeTab === "Exames") {
-             const lista = pacienteData.historico_exames || [];
-             // Se a lista vier vazia, pode ser que o backend retorne estrutura diferente, 
-             // mas o layout está pronto para receber: [{exame: "...", data: "..."}]
-             if (lista.length === 0) return <div className="p-8 text-center text-Grey italic">Nenhum exame no histórico.</div>;
-
-             return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {lista.map((item, i) => (
-                        <div key={i} className="bg-white p-4 rounded-xl border border-LightGrey shadow-sm">
-                            <p className="font-bold text-Black">{item.exame || "Exame"}</p>
-                            <p className="text-sm text-DarkGrey mt-1">Tipo: {item.tipo}</p>
-                            <p className="text-xs text-Grey mt-2">Solicitado em: {new Date(item.data_solicitacao || Date.now()).toLocaleDateString('pt-BR')}</p>
-                        </div>
-                    ))}
-                </div>
-             );
-        }
+    
+    // Certifica-se de que o valor de busca foi atualizado
+    const handleSearchChange = (value) => {
+        setSearchTerm(value);
     };
 
-    // ------------------------------
-    // RENDERIZAÇÃO GERAL
-    // ------------------------------
-    return (
-        <div className="p-8 pt-4 bg-LightGrey min-h-full">
+    // Abre o modal de detalhes do atendimento
+    const openAtendimentoDetails = (atendimentoId) => {
+        const atendimento = prontuario?.historico?.find(at => at.id === atendimentoId);
+        setSelectedAtendimento(atendimento || null);
+    };
 
-            {/* Busca */}
-            <div className="mb-6 flex items-center gap-4">
-                <SearchBar
-                    placeholder="Buscar paciente por nome ou CPF..."
-                    onSearch={(val) => setSearchTerm(val)}
-                    onSubmit={(val) => handleSearchSubmit(val)}
-                    className="w-full"
-                    showFilter={false}
-                />
+    const closeAtendimentoDetails = () => {
+        setSelectedAtendimento(null);
+    };
 
-                <button
-                    onClick={() => handleSearchSubmit(searchTerm)}
-                    className="py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-                >
-                    Buscar
-                </button>
-            </div>
+    // --- Renderização da Aba Ativa ---
+    const renderTabContent = () => {
+        const dataMap = {
+            Historico: prontuario?.historico || [],
+            Diagnosticos: prontuario?.diagnosticos || [],
+            Prescricoes: prontuario?.prescricoes || [],
+            Exames: prontuario?.exames || [],
+        };
+        const data = dataMap[activeTab] || [];
 
-            {loading && <div className="text-center py-12 text-Blue3 font-bold animate-pulse">Carregando Prontuário...</div>}
+        if (activeTab === 'Historico') {
+            if (!data.length) {
+                return (
+                    <div className="text-sm text-gray-500 text-center">
+                        Nenhum atendimento encontrado.
+                    </div>
+                );
+            }
+            return (
+                <div className="space-y-2">
+                    {data.map(item => (
+                        <button
+                            key={item.id}
+                            onClick={() => openAtendimentoDetails(item.id)}
+                            className="w-full text-left p-4 bg-white rounded-lg border-b border-gray-100 shadow-sm hover:bg-gray-50 transition grid grid-cols-5 gap-4 items-center"
+                        >
+                            <div className="col-span-2">
+                                <p className="font-semibold text-gray-800">{item.tipo}</p>
+                                <p className="text-sm text-gray-500">{item.medico}</p>
+                            </div>
+                            <div className="col-span-2">
+                                <p className="text-sm text-gray-600">Queixa: <span className="font-medium">{item.queixa}</span></p>
+                            </div>
+                            <div className="text-right text-sm text-gray-700">
+                                <p>{item.data}</p>
+                                <p>{item.hora}</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            );
+        }
 
-            {!loading && patientFound && pacienteData && (
-                <div className="max-w-5xl mx-auto bg-PureWhite rounded-2xl shadow-lg border border-LightGrey overflow-hidden">
-                    
-                    {/* Cabeçalho do Paciente */}
-                    <div className="bg-gray-50 p-6 border-b border-LightGrey flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        // Renderização para Diagnósticos, Prescrições e Exames
+        if (!data.length) {
+            return (
+                <div className="text-sm text-gray-500 text-center">
+                    Nenhum registro disponível nesta aba.
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-4">
+                {data.map(item => (
+                    <div key={item.id || item.titulo} className="w-full p-4 bg-white rounded-lg border border-gray-100 shadow-sm grid grid-cols-2">
                         <div>
-                            <h2 className="text-2xl font-bold text-Black mb-1">{pacienteData.nome}</h2>
-                            <div className="flex flex-wrap gap-4 text-sm text-DarkGrey">
-                                <span className="bg-white px-3 py-1 rounded border border-LightGrey font-mono font-bold">CPF: {pacienteData.cpf}</span>
-                                <span className="py-1">Nasc: <strong>{pacienteData.data_nascimento}</strong></span>
-                            </div>
-                            
-                            {/* Tags de Alerta */}
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {pacienteData.alergias.map((a, i) => (
-                                    <span key={i} className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full border border-red-200">
-                                        {a.alergia}
-                                    </span>
-                                ))}
-                                {pacienteData.condicoes.map((c, i) => (
-                                    <span key={i} className="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full border border-yellow-200">
-                                        {c.condicao}
-                                    </span>
-                                ))}
-                            </div>
+                            {/* Conteúdo da Linha */}
+                            {activeTab === 'Diagnosticos' && (
+                                <>
+                                    <p className="font-semibold text-gray-800">{item.titulo}</p>
+                                    <p className="text-sm text-gray-500">CID: {item.cid}</p>
+                                </>
+                            )}
+                            {activeTab === 'Prescricoes' && (
+                                <>
+                                    <p className="font-semibold text-gray-800">{item.titulo}</p>
+                                    <p className="text-sm text-gray-600">Uso: <span className="text-green-700">{item.uso}</span></p>
+                                </>
+                            )}
+                            {activeTab === 'Exames' && (
+                                <>
+                                    <p className="font-semibold text-gray-800">{item.titulo}</p>
+                                    <p className={`text-sm ${item.resultado === 'Normal' ? 'text-green-600' : 'text-red-600'}`}>Resultado: {item.resultado}</p>
+                                </>
+                            )}
+                        </div>
+                        <div className="text-right text-sm text-gray-700 font-medium pt-1">
+                            {item.data}
                         </div>
                     </div>
+                ))}
+            </div>
+        );
+    };
 
-                    {/* Abas */}
-                    <div className="flex border-b border-LightGrey bg-white px-6 overflow-x-auto">
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+
+            {/* 2. BUSCA DO PACIENTE (Componente SearchBar) */}
+            <div className="mb-6">
+                <SearchBar
+                    placeholder="Buscar paciente por nome ou CPF..."
+                    // Atualiza o searchTerm enquanto digita
+                    onSearch={handleSearchChange} 
+                    // Aciona a busca quando Enter é pressionado
+                    onSubmit={handleSearchSubmit} 
+                    // Ajustes de estilo para a SearchBar
+                    className="w-full"
+                    showFilter={false} // Não mostra o ícone de filtro lateral se não for usado
+                />
+            </div>
+            
+            {/* Botão manual de Busca */}
+            <div className="mb-6 flex justify-end">
+                 <button onClick={() => handleSearchSubmit(searchTerm)} className="py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                     Buscar Prontuário
+                 </button>
+            </div>
+
+            {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                    {error}
+                </div>
+            )}
+            {loading && (
+                <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg text-gray-600 shadow-sm">
+                    Buscando prontuário...
+                </div>
+            )}
+
+
+            {/* 3. CONTEÚDO DO PRONTUÁRIO */}
+            {patientFound && prontuario && (
+                <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-200">
+                    
+                    {/* Dados do Paciente */}
+                    <div className="mb-6 pb-4 border-b border-gray-200">
+                        <p className="text-lg font-bold text-gray-800">{prontuario.paciente.nome}</p>
+                        <p className="text-sm text-gray-600">
+                            CPF: <span className="font-medium">{prontuario.paciente.cpf}</span> | 
+                            Data de Nascimento: <span className="font-medium">{prontuario.paciente.nascimento}</span>
+                        </p>
+                        {(prontuario.paciente.condicoes?.length > 0 || prontuario.paciente.alergias?.length > 0) && (
+                            <div className="mt-2 text-sm text-gray-600">
+                                {prontuario.paciente.condicoes?.length > 0 && (
+                                    <p><span className="font-medium">Condições:</span> {prontuario.paciente.condicoes.join(', ')}</p>
+                                )}
+                                {prontuario.paciente.alergias?.length > 0 && (
+                                    <p><span className="font-medium">Alergias:</span> {prontuario.paciente.alergias.join(', ')}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Abas de Navegação */}
+                    <div className="flex border-b border-gray-300 mb-6">
                         {tabOptions.map(tab => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`py-4 px-6 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === tab.key ? 'border-Blue1 text-Blue1' : 'border-transparent text-Grey hover:text-Black hover:bg-gray-50'}`}
+                                className={`
+                                    py-2 px-6 text-sm font-semibold transition -mb-[1px]
+                                    ${activeTab === tab.key 
+                                        ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                    }
+                                `}
                             >
                                 {tab.label}
                             </button>
                         ))}
                     </div>
 
-                    {/* Conteúdo */}
-                    <div className="p-6 bg-gray-50/30 min-h-[400px]">
+                    {/* Conteúdo da Aba */}
+                    <div className="min-h-[300px]">
                         {renderTabContent()}
                     </div>
                 </div>
             )}
+            
+            {!loading && !patientFound && searchTerm.length > 0 && !error && (
+                <div className="p-10 text-center text-gray-500 bg-white rounded-xl shadow-xl">
+                    Paciente com nome/CPF "{searchTerm}" não encontrado. Por favor, tente novamente.
+                </div>
+            )}
 
-            {/* {selectedAtendimento && (
-                <DetalhesAtendimentoModal
-                    atendimento={selectedAtendimento}
-                    onClose={closeAtendimentoDetails}
+            {/* MODAL DE DETALHES DO ATENDIMENTO */}
+            {selectedAtendimento && (
+                <DetalhesAtendimentoModal 
+                    atendimento={selectedAtendimento} 
+                    onClose={closeAtendimentoDetails} 
                 />
-            )} */}
+            )}
         </div>
     );
 }
