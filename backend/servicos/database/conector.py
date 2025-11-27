@@ -10,7 +10,7 @@ class DatabaseManager:
 
     def __init__(self) -> None:
         self.conn = psycopg2.connect(
-            dbname="upa",
+            dbname="bd_upa",
             user="postgres",
             password="Lost02",
             host="127.0.0.1",
@@ -57,3 +57,4 @@ class DatabaseManager:
             return None
 
         return dict(query_result)
+
