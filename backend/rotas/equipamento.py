@@ -60,3 +60,4 @@ def post_medicamento():
         return jsonify("Não foi possível registrar o medicamento"), 400
     
     return jsonify("Medicamento registrado com sucesso"), 200
+

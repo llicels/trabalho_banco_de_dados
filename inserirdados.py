@@ -142,6 +142,56 @@ def fazer_post(endpoint, data, mostrar_erro=False):
             print(f"  ✗ Erro em {endpoint}: {e}")
         return False
 
+def fazer_get(endpoint, mostrar_erro=False):
+    try:
+        response = requests.get(f"{BASE_URL}{endpoint}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            if mostrar_erro:
+                try:
+                    erro_msg = response.json()
+                    print(f"  ✗ GET {endpoint}: {response.status_code} - {erro_msg}")
+                except:
+                    print(f"  ✗ GET {endpoint}: {response.status_code} - {response.text[:100]}")
+    except Exception as e:
+        if mostrar_erro:
+            print(f"  ✗ Erro em GET {endpoint}: {e}")
+    return []
+
+def fazer_put(endpoint, data, mostrar_erro=False):
+    try:
+        response = requests.put(f"{BASE_URL}{endpoint}", json=data)
+        if response.status_code == 200:
+            return True
+        else:
+            if mostrar_erro:
+                try:
+                    erro_msg = response.json()
+                    print(f"  ✗ PUT {endpoint}: {response.status_code} - {erro_msg}")
+                except:
+                    print(f"  ✗ PUT {endpoint}: {response.status_code} - {response.text[:100]}")
+            return False
+    except Exception as e:
+        if mostrar_erro:
+            print(f"  ✗ Erro em PUT {endpoint}: {e}")
+        return False
+
+def atualizar_hospitais_cache():
+    global hospitais_cache
+    hospitais_cache = fazer_get("/hospitais")
+    return hospitais_cache
+
+def criar_atendimento_controlado(payload, descricao=""):
+    if fazer_post("/atendimentos", payload, mostrar_erro=True):
+        registros = fazer_get(f"/atendimentos?cpf_paciente={payload['cpf_paciente']}")
+        registros_ordenados = sorted(registros, key=lambda x: x.get("data_hora_entrada", ""), reverse=True)
+        for registro in registros_ordenados:
+            if registro.get("data_hora_entrada") == payload["data_hora_entrada"]:
+                return registro.get("id_atendimento")
+        return registros_ordenados[0].get("id_atendimento") if registros_ordenados else None
+    return None
+
 # Armazenar IDs gerados
 salas_raio_x_ids = []
 salas_ids = []
@@ -163,6 +213,7 @@ atendimentos_ids = []
 atendimentos_odontologicos_ids = []
 atendimentos_medicos_ids = []
 transferencias_ids = []
+hospitais_cache = []
 
 print("=" * 60)
 print("INSERINDO DADOS REALISTAS PARA UPA")
@@ -209,6 +260,33 @@ for i in range(25):
         leitos_ids.append(i + 1)
         if (i + 1) % 5 == 0:
             print(f"  ✓ {i+1}/25")
+
+# 5. Hospitais base (garantir destinos para transferências)
+print("\n5. Hospitais (10 hospitais)...")
+nomes_hospitais = [
+    "Hospital Central",
+    "Hospital Regional Sul",
+    "Hospital Municipal Norte",
+    "Hospital Universitário",
+    "Hospital CardioVida",
+    "Hospital Oncológico Esperança",
+    "Hospital Ortopédico",
+    "Hospital da Criança",
+    "Hospital São Lucas",
+    "Hospital Santa Maria"
+]
+for i, nome in enumerate(nomes_hospitais[:10]):
+    data = {
+        "nome": nome,
+        "endereco": f"Avenida {nome} - {i+1}",
+        "telefone": gerar_telefone()
+    }
+    if fazer_post("/hospitais", data):
+        if (i + 1) % 5 == 0:
+            print(f"  ✓ {i+1}/10")
+
+if not atualizar_hospitais_cache():
+    print("  ⚠ Não foi possível recuperar os hospitais recém-criados.")
 
 # 5. Pacientes
 print("\n5. Pacientes (25 pacientes)...")
@@ -492,19 +570,27 @@ for i in range(25):
 
 # 16. Transferências (só para casos graves)
 print("\n16. Transferências (25 transferências - casos graves)...")
-status_transferencia = ["Pendente", "Em andamento", "Concluída"]
+status_transferencia = ["Aguardando", "Em andamento", "Concluída", "Rejeitada"]
 transportes = ["Ambulância", "UTI Móvel", "Helicóptero"]
 justificativas = ["Necessita cirurgia", "Falta de leito UPA", "Especialidade não disponível"]
+# garantir hospitais disponíveis
+if not hospitais_cache:
+    atualizar_hospitais_cache()
+if not hospitais_cache:
+    print("  ⚠ Sem hospitais disponíveis; transferências podem ficar sem destino.")
+
 # Transferir atendimentos médicos (priorizar os primeiros)
 atendimentos_para_transferir = atendimentos_medicos_ids[:25] if len(atendimentos_medicos_ids) >= 25 else atendimentos_medicos_ids
 transferencias_criadas = 0
 for i, id_atend in enumerate(atendimentos_para_transferir):
+    hospital_escolhido = random.choice(hospitais_cache) if hospitais_cache else {}
     data = {
         "data_transferencia": gerar_data_recente(),
         "justificativa": random.choice(justificativas),
         "status_transferencia": random.choice(status_transferencia),
         "transporte": random.choice(transportes),
-        "id_atendimento": id_atend
+        "id_atendimento": id_atend,
+        "id_hospital": hospital_escolhido.get("id_hospital") if hospital_escolhido else None
     }
     if fazer_post("/transferencias", data, mostrar_erro=(i < 3)):
         # Assumir IDs sequenciais começando em 1
@@ -512,23 +598,6 @@ for i, id_atend in enumerate(atendimentos_para_transferir):
         transferencias_criadas += 1
         if transferencias_criadas % 5 == 0:
             print(f"  ✓ {transferencias_criadas}/25")
-
-# 17. Hospitais (para transferências)
-print("\n17. Hospitais (25 hospitais)...")
-nomes_hospitais = ["Hospital Central", "Hospital Regional", "Hospital Municipal", "Hospital Universitário"]
-# Só criar hospitais para transferências que realmente existem
-hospitais_inseridos = 0
-for i, id_transferencia in enumerate(transferencias_ids[:25]):
-    data = {
-        "nome": f"{random.choice(nomes_hospitais)}",
-        "endereco": f"Av. Hospital {i+1}",
-        "telefone": gerar_telefone(),
-        "id_transferencia": id_transferencia
-    }
-    if fazer_post("/hospitais", data):
-        hospitais_inseridos += 1
-        if hospitais_inseridos % 5 == 0:
-            print(f"  ✓ {hospitais_inseridos}/25")
 
 # 18. Ocupações de Leitos (pacientes graves)
 print("\n18. Ocupações de Leitos (25 ocupações)...")
@@ -666,6 +735,114 @@ for i in range(25):
         if fazer_post(f"/turnos/{id_turno}/colaboradores-gerais", data):
             if (i + 1) % 5 == 0:
                 print(f"  ✓ {i+1}/25")
+
+# 26. Casos especiais para dashboards e demonstrações
+print("\n26. Casos especiais para dashboards...")
+hoje = datetime.now()
+hoje_str = hoje.strftime("%Y-%m-%d")
+dias_semana_labels = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+dia_semana_nome = dias_semana_labels[hoje.weekday()]
+
+# 26.1 Criar turnos específicos para hoje
+turnos_dashboard_ids = []
+turno_janelas = [
+    ("07:00:00", "15:00:00"),
+    ("15:00:00", "23:00:00")
+]
+for inicio, fim in turno_janelas:
+    hora_chegada = f"{hoje_str} {inicio}"
+    hora_saida = f"{hoje_str} {fim}"
+    data = {
+        "dia_semana": dia_semana_nome,
+        "hora_chegada": hora_chegada,
+        "hora_saida": hora_saida
+    }
+    if fazer_post("/turnos", data):
+        novo_id = len(turnos_ids) + 1
+        turnos_ids.append(novo_id)
+        turnos_dashboard_ids.append(novo_id)
+
+# 26.2 Garantir equipe escalada nesses turnos
+if turnos_dashboard_ids:
+    turno_ref = turnos_dashboard_ids[0]
+    for cpf in medicos_cpfs[:3]:
+        fazer_post(f"/turnos/{turno_ref}/medicos", {"cpf_medico": cpf})
+    for cpf in profissionais_enfermagem_cpfs[:4]:
+        fazer_post(f"/turnos/{turno_ref}/profissionais-enfermagem", {"cpf_profissional": cpf})
+    for cpf in colaboradores_gerais_cpfs[:3]:
+        fazer_post(f"/turnos/{turno_ref}/colaboradores-gerais", {"cpf_colaborador": cpf})
+
+# 26.3 Criar atendimentos conflitantes para agenda
+def criar_atendimento_para_agenda(cpf_paciente, cpf_medico, data_hora, obs):
+    nivel = random.choice(["Médio", "Alto"])
+    temp, pressao, freq = gerar_sinais_vitais_coerentes(nivel)
+    payload = {
+        "data_hora_entrada": data_hora,
+        "cid": random.choice(cids_medicos),
+        "observacoes": obs,
+        "temperatura": temp,
+        "pressao_arterial": pressao,
+        "nivel_risco": nivel,
+        "frequencia_cardiaca": freq,
+        "cpf_paciente": cpf_paciente,
+        "cpf_medico": cpf_medico,
+        "cpf_dentista": None,
+        "cpf_assistente_social": None,
+        "cpf_tecnico_radiologia": None,
+        "cpf_profissional_enfermagem": random.choice(profissionais_enfermagem_cpfs) if profissionais_enfermagem_cpfs else None,
+        "data_hora_saida": None
+    }
+    return criar_atendimento_controlado(payload, obs)
+
+atendimentos_especiais = []
+if medicos_cpfs and len(pacientes_cpfs) >= 2:
+    medico_foco = medicos_cpfs[0]
+    horario_conf_base = hoje.replace(hour=10, minute=0, second=0, microsecond=0)
+    pac1, pac2 = pacientes_cpfs[0], pacientes_cpfs[1]
+    id_conf1 = criar_atendimento_para_agenda(pac1, medico_foco, horario_conf_base.strftime("%Y-%m-%d %H:%M:%S"), "Atendimento conflito 1")
+    id_conf2 = criar_atendimento_para_agenda(pac2, medico_foco, (horario_conf_base + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S"), "Atendimento conflito 2")
+    if id_conf1:
+        atendimentos_especiais.append(id_conf1)
+    if id_conf2:
+        atendimentos_especiais.append(id_conf2)
+    # Finalizar o segundo para gerar exame "Pronto"
+    if id_conf2:
+        fazer_put(f"/atendimentos/{id_conf2}/finalizar", {"data_hora_saida": (horario_conf_base + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")})
+
+# 26.4 Criar amostras com diferentes status para exames
+if atendimentos_especiais:
+    agora = datetime.now()
+    for idx, id_atendimento in enumerate(atendimentos_especiais):
+        if idx == 0:
+            previsao = (agora + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S")  # pendente
+        elif idx == 1:
+            previsao = (agora - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")  # já liberado
+        else:
+            previsao = gerar_timestamp_recente()
+        fazer_post(
+            f"/atendimentos/{id_atendimento}/amostras",
+            {
+                "tipo": random.choice(["Sangue", "Urina"]),
+                "exame": random.choice(["Hemograma", "Raio-X Tórax", "PCR", "Ultrassom"]),
+                "previsao_liberacao": previsao
+            }
+        )
+
+# 26.5 Transferências com status variados e hospitais definidos
+if hospitais_cache and atendimentos_especiais:
+    estados_transferencia_interessantes = ["Aguardando", "Em andamento", "Concluída"]
+    for idx, status in enumerate(estados_transferencia_interessantes):
+        if idx >= len(atendimentos_especiais):
+            break
+        data = {
+            "data_transferencia": hoje_str,
+            "justificativa": justificativas[idx % len(justificativas)],
+            "status_transferencia": status,
+            "transporte": transportes[idx % len(transportes)],
+            "id_atendimento": atendimentos_especiais[idx],
+            "id_hospital": random.choice(hospitais_cache).get("id_hospital")
+        }
+        fazer_post("/transferencias", data, mostrar_erro=True)
 
 print("\n" + "=" * 60)
 print("INSERÇÕES CONCLUÍDAS!")

@@ -76,3 +76,4 @@ def leitos_disponiveis():
     if not tipo:
         return jsonify("Parâmetro 'tipo' é obrigatório"), 400
     return jsonify(LeitoDatabase().get_leitos_disponiveis_por_tipo(tipo)), 200
+

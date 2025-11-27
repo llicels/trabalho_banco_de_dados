@@ -91,3 +91,4 @@ class ProfissionaisDatabase:
         statement = f"""INSERT INTO Colaborador_Geral (Nome, CPF, Telefone, Função) 
                         VALUES ('{nome}', '{cpf}', '{telefone}', '{funcao}');"""
         return self.db.execute_statement(statement)
+

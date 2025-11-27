@@ -144,3 +144,4 @@ def post_colaborador_geral():
         return jsonify("Não foi possível registrar o colaborador geral"), 400
     
     return jsonify("Colaborador geral cadastrado com sucesso"), 200
+

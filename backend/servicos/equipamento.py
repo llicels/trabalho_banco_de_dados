@@ -35,3 +35,4 @@ class MedicamentoDatabase:
     def registra_medicamento(self, nome: str) -> bool:
         statement = f"INSERT INTO Medicamento (Nome) VALUES ('{nome}');"
         return self.db.execute_statement(statement)
+

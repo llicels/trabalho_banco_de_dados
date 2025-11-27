@@ -33,3 +33,4 @@ class PacienteDatabase:
         statement = f"""INSERT INTO Alergias_Paciente (Alergias, CPF_Paciente) 
                         VALUES ('{alergia}', '{cpf}');"""
         return self.db.execute_statement(statement)
+

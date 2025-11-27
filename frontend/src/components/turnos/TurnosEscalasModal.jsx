@@ -8,11 +8,11 @@ const mockAllColaboradores = [
 ];
 
 // Card de exibição de um colaborador dentro do modal
-const ColaboradorCard = ({ nome, id, funcao, onAction, actionText }) => (
+const ColaboradorCard = ({ nome, documento, funcao, onAction, actionText }) => (
   <div className="flex justify-between items-center p-3 my-2 bg-gray-100 rounded-lg shadow-sm border border-gray-200">
     <span className="font-semibold text-gray-800">{nome}</span>
     <div className="text-sm text-gray-600 flex gap-4 items-center">
-      <span>ID: {id}</span>
+      <span>ID: {documento || '—'}</span>
       <span>Função: {funcao}</span>
       {onAction && (
         <button 
@@ -75,7 +75,7 @@ export function TurnosEscalasModal({ data, onClose }) {
                 <ColaboradorCard 
                     key={colab.id} 
                     nome={colab.nome} 
-                    id={colab.crm} 
+                    documento={colab.documento || colab.id} 
                     funcao={colab.funcao} 
                 />
               ))}
@@ -118,7 +118,7 @@ export function TurnosEscalasModal({ data, onClose }) {
                               <ColaboradorCard 
                                   key={colab.id} 
                                   nome={colab.nome} 
-                                  id={colab.crm} 
+                              documento={colab.crm} 
                                   funcao={colab.funcao} 
                                   onAction={() => handleAddColaborador(colab)}
                                   actionText="ADICIONAR"

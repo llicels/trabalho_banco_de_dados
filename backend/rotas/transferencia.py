@@ -74,3 +74,4 @@ def transferencias_paciente():
     if not cpf:
         return jsonify("Parâmetro 'cpf' é obrigatório"), 400
     return jsonify(TransferenciaDatabase().get_transferencias_por_paciente(cpf)), 200
+

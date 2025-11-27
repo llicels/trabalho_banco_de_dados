@@ -75,3 +75,4 @@ class TransferenciaDatabase:
             query += f" WHERE t.Status_Tranferência = '{status}'"
         query += " ORDER BY t.Data_Transferência DESC, t.ID_Transferência DESC;"
         return self.db.execute_select_all(query)
+
