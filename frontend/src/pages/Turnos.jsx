@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { TurnosEscalasModal } from "../components/turnos/TurnosEscalasModal"; 
 import { SearchBar } from '../components/SearchBar';
 import { FilterSelect } from '../components/FilterSelect';
-
-// Imports de ícones...
 import WarningIcon from '../components/icons/WarningIcon';
 import { turnosService } from '../services/api';
 
@@ -36,38 +34,11 @@ const mapFuncaoParaSetor = (funcao = '') => {
   return null;
 };
 
-const formatDateLabel = (date) => {
-  const options = { weekday: 'short', day: '2-digit', month: '2-digit' };
-  let formatted = date.toLocaleDateString('pt-BR', options);
-  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  return formatted.replace(', ', ' - ');
-};
+// --- ALTERAÇÃO 1: Definimos apenas a data fixa ---
+const dateOptions = [
+  { label: 'Segunda, 01/01/2024', value: '2024-01-01' }
+];
 
-const formatDateValue = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const generateDateOptions = (daysCount = 5) => {
-  const today = new Date();
-  const dates = [];
-  for (let i = daysCount; i >= 1; i -= 1) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    dates.push({ label: formatDateLabel(date), value: formatDateValue(date) });
-  }
-  dates.push({ label: `${formatDateLabel(today)} (Hoje)`, value: formatDateValue(today), isToday: true });
-  for (let i = 1; i <= daysCount; i += 1) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    dates.push({ label: formatDateLabel(date), value: formatDateValue(date) });
-  }
-  return dates;
-};
-
-const dateOptions = generateDateOptions(5);
 const functionOptions = ["Todas", "Médico", "Enfermagem", "Assistente Social", "Apoio"];
 const sectorOptions = ["Todos", ...sectorDefinitions.map((setor) => setor.label)];
 const allSectorKeys = sectorDefinitions.map((setor) => setor.key);
@@ -82,9 +53,10 @@ const functionToSectorMap = {
 // --- COMPONENTE PRINCIPAL ---
 
 export function Turnos() {
-  const todayOption = dateOptions.find((option) => option.isToday) || dateOptions[Math.floor(dateOptions.length / 2)];
+  // --- ALTERAÇÃO 2: Estado inicial fixo ---
+  const [selectedDate, setSelectedDate] = useState('2024-01-01'); 
+  
   const [modalData, setModalData] = useState(null); 
-  const [selectedDate, setSelectedDate] = useState(todayOption.value); 
   const [selectedFunction, setSelectedFunction] = useState(functionOptions[0]); 
   const [selectedSector, setSelectedSector] = useState(sectorOptions[0]); 
   const [searchTerm, setSearchTerm] = useState(""); 
@@ -129,11 +101,14 @@ export function Turnos() {
     escala.forEach((colaborador) => {
       const setorKey = mapFuncaoParaSetor(colaborador.funcao || '');
       if (!setorKey) return;
+      
+      // Ajuste de segurança para datas
       const inicio = new Date(colaborador.hora_chegada);
       const fim = new Date(colaborador.hora_saida);
-      if (Number.isNaN(inicio) || Number.isNaN(fim)) return;
+      if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) return;
 
       const startHour = Math.max(0, inicio.getHours());
+      // Lógica mantida: garante que o fim não ultrapasse 24h
       const endHour = Math.min(24, Math.max(startHour + 1, fim.getHours()));
 
       for (let hour = startHour; hour < endHour; hour += 1) {
@@ -216,7 +191,7 @@ export function Turnos() {
       )}
       {loading && (
         <div className="mb-4 p-4 bg-white border border-LightGrey rounded-lg text-gray-600 shadow-sm">
-          Carregando escala...
+          Carregando escala de 01/01/2024...
         </div>
       )}
 
@@ -230,6 +205,8 @@ export function Turnos() {
             <FilterSelect 
               label="Data"
               value={selectedDate}
+              // Como só tem uma opção, desabilitar o onChange é opcional, 
+              // mas mantê-lo funcionando é mais seguro para o componente.
               onChange={(e) => setSelectedDate(e.target.value)}
               options={dateOptions}
               className="w-full sm:w-48"
@@ -272,7 +249,7 @@ export function Turnos() {
 
       {/* MATRIZ DE COBERTURA */}
       <div className="bg-PureWhite p-6 rounded-xl shadow-sm border border-LightGrey overflow-x-auto">
-        <h2 className="text-lg font-bold text-Black mb-6">Matriz de Cobertura (24h)</h2>
+        <h2 className="text-lg font-bold text-Black mb-6">Matriz de Cobertura (24h) - 01/01/2024</h2>
         
         <div className="min-w-[1200px]">
             {/* Cabeçalho */}

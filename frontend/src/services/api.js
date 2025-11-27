@@ -169,26 +169,29 @@ export const dashboardService = {
     }
   },
 
-  async getEquipePlantao(dataBusca = new Date().toISOString().slice(0, 10)) {
+  async getEquipePlantao(dataBusca = '2024-01-01') {
     try {
+      // Faz a chamada usando a data fixa por padrão
       const data = await httpGet(`/turnos/escala/data?data=${dataBusca}`);
+      
+      // Garante que é um array para evitar erro no filter
       const lista = safeArray(data);
 
+      // --- CÁLCULOS ---
       const medicos = lista.filter((p) =>
         (p.funcao || '').toLowerCase().includes('médico') ||
-        (p.funcao || '').toLowerCase().includes('medico'),
+        (p.funcao || '').toLowerCase().includes('medico')
       ).length;
 
       const enfermagem = lista.filter((p) => {
         const funcao = (p.funcao || '').toLowerCase();
-        return funcao.includes('enfermeiro') || funcao.includes('técnico') || funcao.includes('tecnico');
+        return funcao.includes('enfermeiro') || 
+               funcao.includes('técnico') || 
+               funcao.includes('tecnico') ||
+               funcao.includes('auxiliar');
       }).length;
 
       const apoio = Math.max(lista.length - medicos - enfermagem, 0);
-
-      if (!lista.length) {
-        return sampleEquipePlantao();
-      }
 
       return {
         total: lista.length,
@@ -196,11 +199,13 @@ export const dashboardService = {
         enfermagem,
         apoio,
       };
+
     } catch (error) {
       console.error('Erro API Equipe:', error);
+      // Apenas em caso de ERRO de conexão/servidor usamos o sample
       return sampleEquipePlantao();
     }
-  },
+},
 
   async getTransferenciasAtivas() {
     try {
@@ -580,8 +585,7 @@ function sampleEquipePlantao() {
 
 function sampleConflicts() {
   return [
-    { key: '3-Sala 3', sala: 'Sala 3', hora: '10h–11h', day: 3, date: '03/01', count: 2, events: [] },
-    { key: '15-Sala 1', sala: 'Sala 1', hora: '09h–10h', day: 15, date: '15/01', count: 2, events: [] },
+
   ];
 }
 
@@ -615,24 +619,114 @@ function transferenciasSampleData() {
 function examesSampleData() {
   return [
     {
+      id: 'sample-exame-4',
+      paciente: 'Ana Pereira',
+      tipo: 'Tomografia de Crânio',
+      status: 'Pendente',
+      dataSolicitacao: '21/11/2025 11:15',
+      dataResultado: '—',
+      solicitante: 'Dr. Ricardo',
+      resultadoDetalhes: 'Aguardando laudo radiológico.',
+    },
+    {
       id: 'sample-exame-1',
       paciente: 'João da Silva',
       tipo: 'Hemograma',
-      status: 'Pronto',
-      dataSolicitacao: '20/11/2025 08:00',
-      dataResultado: '24/11/2025 10:00',
+      status: 'Pendente',
+      dataSolicitacao: '26/11/2025 08:00',
+      dataResultado: '—',
       solicitante: 'Dr. André',
-      resultadoDetalhes: 'Leucócitos: 8.5 (Normal). Hemoglobina: 14.2 (Normal).',
+      resultadoDetalhes: 'Amostra recebida no laboratório.',
     },
     {
-      id: 'sample-exame-2',
-      paciente: 'Maria Souza',
-      tipo: 'Raio-X Tórax',
+      id: 'sample-exame-5',
+      paciente: 'Roberto Costa',
+      tipo: 'Glicemia de Jejum',
       status: 'Pendente',
-      dataSolicitacao: '23/11/2025 14:30',
+      dataSolicitacao: '25/11/2025 07:30',
       dataResultado: '—',
       solicitante: 'Dra. Laura',
-      resultadoDetalhes: 'Aguardando laudo.',
+      resultadoDetalhes: 'Aguardando análise.',
+    },
+    {
+      id: 'sample-exame-7',
+      paciente: 'Lucas Oliveira',
+      tipo: 'Perfil Lipídico',
+      status: 'Pronto',
+      dataSolicitacao: '25/11/2025 10:00',
+      dataResultado: '26/11/2025 14:00',
+      solicitante: 'Dra. Sofia',
+      resultadoDetalhes: 'Colesterol Total: 180 mg/dL (Desejável).',
+    },
+    {
+      id: 'sample-exame-14',
+      paciente: 'Mariana Costa',
+      tipo: 'Tomografia de Crânio',
+      status: 'Coletado',
+      dataSolicitacao: '26/11/2025 09:00',
+      dataResultado: '—',
+      solicitante: 'Dra. Sofia',
+      resultadoDetalhes: 'Imagens capturadas, enviadas para análise.',
+    },
+    {
+      id: 'sample-exame-8',
+      paciente: 'Juliana Mendes',
+      tipo: 'Ressonância Magnética (Joelho D)',
+      status: 'Pronto',
+      dataSolicitacao: '20/11/2025 16:45',
+      dataResultado: '23/11/2025 09:15',
+      solicitante: 'Dr. Marcos',
+      resultadoDetalhes: 'Sinais de lesão parcial do ligamento cruzado anterior.',
+    },
+    {
+      id: 'sample-exame-12',
+      paciente: 'Beatriz Almeida',
+      tipo: 'Raio-X Tórax',
+      status: 'Pendente', // PEDIDO ATENDIDO
+      dataSolicitacao: '26/11/2025 08:10',
+      dataResultado: '—',
+      solicitante: 'Dra. Laura',
+      resultadoDetalhes: 'Solicitação aberta no sistema.',
+    },
+    {
+      id: 'sample-exame-6',
+      paciente: 'Fernanda Lima',
+      tipo: 'Urocultura',
+      status: 'Pronto',
+      dataSolicitacao: '19/11/2025 09:00',
+      dataResultado: '22/11/2025 14:20',
+      solicitante: 'Dr. André',
+      resultadoDetalhes: 'Positivo para E. coli > 100.000 UFC/mL. Antibiograma anexo.',
+    },
+    {
+      id: 'sample-exame-15',
+      paciente: 'Rafael Nunes',
+      tipo: 'Glicemia de Jejum',
+      status: 'Pendente',
+      dataSolicitacao: '26/11/2025 07:15',
+      dataResultado: '—',
+      solicitante: 'Dra. Laura',
+      resultadoDetalhes: 'Aguardando processamento laboratorial.',
+    },
+    {
+      id: 'sample-exame-11',
+      paciente: 'Felipe Rocha',
+      tipo: 'Hemograma',
+      status: 'Pendente',
+      dataSolicitacao: '26/11/2025 07:45',
+      dataResultado: '—',
+      solicitante: 'Dr. André',
+      resultadoDetalhes: 'Aguardando triagem da amostra.',
+    },
+    {
+      id: 'sample-exame-17',
+      paciente: 'Bruno Vieira',
+      tipo: 'Perfil Lipídico',
+      status: 'Coletado',
+      dataSolicitacao: '26/11/2025 08:00',
+      dataResultado: '—',
+      solicitante: 'Dr. Marcos',
+      resultadoDetalhes: 'Soro separado e armazenado.',
     },
     {
       id: 'sample-exame-3',
@@ -643,6 +737,66 @@ function examesSampleData() {
       dataResultado: '—',
       solicitante: 'Dr. André',
       resultadoDetalhes: 'Em análise pela cardiologia.',
+    },
+    {
+      id: 'sample-exame-16',
+      paciente: 'Julia Mendes',
+      tipo: 'Urocultura',
+      status: 'Pronto',
+      dataSolicitacao: '20/11/2025 09:20',
+      dataResultado: '24/11/2025 11:00',
+      solicitante: 'Dr. André',
+      resultadoDetalhes: 'Negativo (Ausência de crescimento bacteriano).',
+    },
+    {
+      id: 'sample-exame-10',
+      paciente: 'Carla Dias',
+      tipo: 'Enzimas Cardíacas (Troponina)',
+      status: 'Pronto',
+      dataSolicitacao: '24/11/2025 22:10',
+      dataResultado: '24/11/2025 23:50',
+      solicitante: 'Dr. Ricardo',
+      resultadoDetalhes: 'Resultado: < 0.01 ng/mL (Negativo).',
+    },
+    {
+      id: 'sample-exame-13',
+      paciente: 'Gabriel Santos',
+      tipo: 'Eletrocardiograma',
+      status: 'Pronto',
+      dataSolicitacao: '26/11/2025 08:30',
+      dataResultado: '26/11/2025 09:45',
+      solicitante: 'Dr. Ricardo',
+      resultadoDetalhes: 'Ritmo sinusal normal.',
+    },
+    {
+      id: 'sample-exame-9',
+      paciente: 'Paulo Henrique',
+      tipo: 'PCR - COVID-19',
+      status: 'Pendente',
+      dataSolicitacao: '24/11/2025 18:20',
+      dataResultado: '—',
+      solicitante: 'Dra. Laura',
+      resultadoDetalhes: 'Fila de processamento (Alta demanda).',
+    },
+    {
+      id: 'sample-exame-2',
+      paciente: 'Maria Souza',
+      tipo: 'Raio-X Tórax',
+      status: 'Pronto',
+      dataSolicitacao: '23/11/2025 14:30',
+      dataResultado: '23/11/2025 16:00',
+      solicitante: 'Dra. Laura',
+      resultadoDetalhes: 'Área cardíaca dentro dos limites da normalidade.',
+    },
+    {
+      id: 'sample-exame-18',
+      paciente: 'Camila Oliveira',
+      tipo: 'Ressonância Magnética (Joelho D)',
+      status: 'Pendente',
+      dataSolicitacao: '26/11/2025 10:15',
+      dataResultado: '—',
+      solicitante: 'Dr. Ricardo',
+      resultadoDetalhes: 'Paciente em espera na recepção de imagem.',
     },
   ];
 }

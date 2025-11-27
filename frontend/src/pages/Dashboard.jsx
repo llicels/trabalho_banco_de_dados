@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardService } from '../services/api';
+import { dashboardService, transferenciasService } from '../services/api';
 
 // Imports de componentes...
 import { StatCard } from '../components/dashboard/StatCard';
@@ -19,27 +19,46 @@ export function Dashboard() {
 
   const [leitos, setLeitos] = useState({ total: 40, ocupados: 0, detalhes: { capEmergencia: 0, capObservacao: 0, ocupadosEmergencia: 0, ocupadosObservacao: 0, manutencao: 0 }});
   const [equipe, setEquipe] = useState({ total: 0, medicos: 0, enfermagem: 0, apoio: 0 });
-  const [transferencias, setTransferencias] = useState(0);
+  const [transferencias, setTransferencias] = useState([]);
   const [conflitos, setConflitos] = useState({ total: 0, salas: [] });
   const [exames, setExames] = useState({ atrasados: 0, aguardando: 0, lista: [] });
   
   useEffect(() => {
     async function carregarDados() {
-      const dadosLeitos = await dashboardService.getDadosLeitos();
-      const dadosEquipe = await dashboardService.getEquipePlantao();
-      const dadosTransf = await dashboardService.getTransferenciasAtivas();
-      const dadosConflitos = await dashboardService.getConflitosAgenda();
-      const dadosExames = await dashboardService.getExamesPendentes();
+      try {
+        const dadosLeitos = await dashboardService.getDadosLeitos();
+        const dadosEquipe = await dashboardService.getEquipePlantao();
+        const dadosTransf = await transferenciasService.getResumo();
+        const dadosConflitos = await dashboardService.getConflitosAgenda();
+        const dadosExames = await dashboardService.getExamesPendentes();
 
-      setLeitos(dadosLeitos);
-      setEquipe(dadosEquipe);
-      setTransferencias(dadosTransf);
-      setConflitos(dadosConflitos);
-      setExames(dadosExames);
+        setLeitos(dadosLeitos);
+        setEquipe(dadosEquipe);
+        
+        setTransferencias(Array.isArray(dadosTransf) ? dadosTransf : []); 
+        // ---------------------
+
+        setConflitos(dadosConflitos);
+        setExames(dadosExames);
+      } catch (error) {
+        console.error("Erro ao carregar dashboard", error);
+      }
     }
 
     carregarDados();
   }, []);
+  
+  const transferenciasPendentes = useMemo(() => {
+      const statusPendentes = ['Aguardando', 'Pendente']; 
+      
+      return transferencias.filter(t => statusPendentes.includes(t.status)).length;
+  }, [transferencias]);
+  
+      const transferenciasEmAndamento = useMemo(() => {
+      const statusEmAndamento = ['Em Andamento']; 
+  
+      return transferencias.filter(t => statusEmAndamento.includes(t.status)).length;
+  }, [transferencias]);
 
   return (
     <div className="p-8 pt-4 bg-LightGrey min-h-full">
@@ -101,12 +120,12 @@ export function Dashboard() {
         <div className="lg:col-span-4">
           <StatCard 
             title="Transferências Ativas"
-            value={transferencias} // DADO DA API
+            value={transferenciasPendentes}
             label="Pacientes em Processo"
             onClick={() => navigate('/transferencias')}
             footerContent={
               <div className="text-base flex justify-center gap-8 text-center">
-                <div><div className="font-bold text-Black">{transferencias}</div><div className="text-sm text-DarkGrey">Aguardando Ambulância</div></div>
+                <div><div className="font-bold text-Black">{transferenciasEmAndamento}</div><div className="text-sm text-DarkGrey">Aguardando Ambulância</div></div>
               </div>
             }
           />
@@ -123,7 +142,6 @@ export function Dashboard() {
         </div>
 
         <div className="lg:col-span-4 w-full h-96">
-           {/* Exames ainda fixo pois falta rota global no backend */}
            <PendingExamsCard 
               onClick={() => navigate('/exames')}
               atrasados={exames.atrasados}

@@ -22,9 +22,11 @@ export function Prontuarios() {
 
     // Lógica de busca final: acionada ao clicar ou pressionar Enter
     const handleSearchSubmit = async (value) => {
-        const query = value.trim();
-        setSearchTerm(query);
-        if (!query) {
+        // Se o value vier do evento de click (objeto), usa o searchTerm do estado
+        const queryTerm = (typeof value === 'string' ? value : searchTerm).trim();
+        
+        setSearchTerm(queryTerm);
+        if (!queryTerm) {
             setProntuario(null);
             setPatientFound(false);
             return;
@@ -33,7 +35,7 @@ export function Prontuarios() {
         setLoading(true);
         setError('');
         try {
-            const resultado = await prontuarioService.buscarProntuario(query);
+            const resultado = await prontuarioService.buscarProntuario(queryTerm);
             if (resultado) {
                 setProntuario(resultado);
                 setPatientFound(true);
@@ -42,7 +44,7 @@ export function Prontuarios() {
             } else {
                 setProntuario(null);
                 setPatientFound(false);
-                setError(`Paciente com "${query}" não encontrado.`);
+                setError(`Paciente com "${queryTerm}" não encontrado.`);
             }
         } catch (err) {
             console.error('Erro ao buscar prontuário', err);
@@ -158,25 +160,27 @@ export function Prontuarios() {
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
 
-            {/* 2. BUSCA DO PACIENTE (Componente SearchBar) */}
-            <div className="mb-6">
-                <SearchBar
-                    placeholder="Buscar paciente por nome ou CPF..."
-                    // Atualiza o searchTerm enquanto digita
-                    onSearch={handleSearchChange} 
-                    // Aciona a busca quando Enter é pressionado
-                    onSubmit={handleSearchSubmit} 
-                    // Ajustes de estilo para a SearchBar
-                    className="w-full"
-                    showFilter={false} // Não mostra o ícone de filtro lateral se não for usado
-                />
-            </div>
-            
-            {/* Botão manual de Busca */}
-            <div className="mb-6 flex justify-end">
-                 <button onClick={() => handleSearchSubmit(searchTerm)} className="py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+            {/* 2. ÁREA DE BUSCA (Barra + Botão lado a lado) */}
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+                
+                {/* SearchBar ocupa o espaço restante (flex-1) */}
+                <div className="flex-1">
+                    <SearchBar
+                        placeholder="Buscar paciente por nome ou CPF..."
+                        onSearch={handleSearchChange} 
+                        onSubmit={handleSearchSubmit} 
+                        className="w-full h-full" // Garante altura consistente se necessário
+                        showFilter={false}
+                    />
+                </div>
+                
+                {/* Botão com tamanho fixo (shrink-0) */}
+                <button 
+                    onClick={() => handleSearchSubmit(searchTerm)} 
+                    className="shrink-0 py-2 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-sm h-[42px] self-start sm:self-auto" // h-[42px] é uma altura estimada para alinhar com inputs comuns, ajuste conforme sua SearchBar
+                >
                      Buscar Prontuário
-                 </button>
+                </button>
             </div>
 
             {error && (
@@ -215,13 +219,13 @@ export function Prontuarios() {
                     </div>
 
                     {/* Abas de Navegação */}
-                    <div className="flex border-b border-gray-300 mb-6">
+                    <div className="flex border-b border-gray-300 mb-6 overflow-x-auto">
                         {tabOptions.map(tab => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`
-                                    py-2 px-6 text-sm font-semibold transition -mb-[1px]
+                                    py-2 px-6 text-sm font-semibold transition -mb-[1px] whitespace-nowrap
                                     ${activeTab === tab.key 
                                         ? 'border-b-4 border-blue-600 text-blue-600 bg-gray-100 rounded-t-lg'
                                         : 'text-gray-600 hover:text-gray-900'
@@ -241,7 +245,7 @@ export function Prontuarios() {
             )}
             
             {!loading && !patientFound && searchTerm.length > 0 && !error && (
-                <div className="p-10 text-center text-gray-500 bg-white rounded-xl shadow-xl">
+                <div className="p-10 text-center text-gray-500 bg-white rounded-xl shadow-xl border border-gray-200">
                     Paciente com nome/CPF "{searchTerm}" não encontrado. Por favor, tente novamente.
                 </div>
             )}
